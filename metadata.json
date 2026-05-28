@@ -1,0 +1,6 @@
+{
+  "name": "家用記帳系統",
+  "description": "專為家庭客製化的公費與生活雜費協作記帳工具，支援多人即時更新、月度警示預算監控與收支統計圓餅圖分析。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

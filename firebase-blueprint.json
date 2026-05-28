@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "householdLedger": {
+      "title": "Household Ledger",
+      "description": "Information about a household collaborative ledger group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique household ledger code/ID" },
+        "name": { "type": "string", "description": "Name of the household group" },
+        "monthlyBudget": { "type": "number", "description": "Monthly budget of the household" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of creation" }
+      },
+      "required": ["id", "name", "monthlyBudget"]
+    },
+    "bookkeepingRecord": {
+      "title": "Bookkeeping Record",
+      "description": "An individual income or expense entry within a household ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique record ID" },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "The nature of the flow" },
+        "category": { "type": "string", "description": "The category (e.g., 公費收入, 水電網路天然氣, 生活雜費)" },
+        "amount": { "type": "number", "description": "The financial amount" },
+        "date": { "type": "string", "format": "date", "description": "The actual transaction date (YYYY-MM-DD)" },
+        "description": { "type": "string", "description": "Optional memo" },
+        "createdBy": { "type": "string", "description": "The user ID who recorded this" },
+        "creatorName": { "type": "string", "description": "The member nickname or identity who recorded this" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of last update" }
+      },
+      "required": ["id", "type", "category", "amount", "date", "createdBy", "creatorName"]
+    },
+    "ledgerMember": {
+      "title": "Ledger Member",
+      "description": "A collaborating participant inside a household ledger group",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique authenticated user ID or pseudo-ID" },
+        "nickname": { "type": "string", "description": "DisplayName or chosen nickname" },
+        "color": { "type": "string", "description": "Theme color code representing this member" },
+        "lastActive": { "type": "string", "format": "date-time", "description": "Last active timestamp" }
+      },
+      "required": ["userId", "nickname", "color"]
+    }
+  },
+  "firestore": {
+    "/household_ledgers/{householdId}": {
+      "schema": "householdLedger",
+      "description": "Root ledger information of a home"
+    },
+    "/household_ledgers/{householdId}/records/{recordId}": {
+      "schema": "bookkeepingRecord",
+      "description": "Transactions recorded under the household"
+    },
+    "/household_ledgers/{householdId}/members/{memberId}": {
+      "schema": "ledgerMember",
+      "description": "Active participants in the household collaboration"
+    }
+  }
+}
