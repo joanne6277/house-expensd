@@ -5,14 +5,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LedgerMember, PRESET_CATEGORIES } from '../types';
+import { LedgerMember, PRESET_CATEGORIES, BookkeepingRecord } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 
-interface RecordFormModalProps {
+export interface RecordFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   members: LedgerMember[];
+  initialData?: BookkeepingRecord | null;
   onAddRecord: (data: {
+    type: 'income' | 'expense';
+    category: string;
+    amount: number;
+    date: string;
+    description: string;
+    payerId?: string;
+    isSettled?: boolean;
+  }) => Promise<void> | void;
+  onUpdateRecord?: (id: string, data: {
     type: 'income' | 'expense';
     category: string;
     amount: number;
@@ -27,7 +37,9 @@ export function RecordFormModal({
   isOpen,
   onClose,
   members,
+  initialData,
   onAddRecord,
+  onUpdateRecord,
 }: RecordFormModalProps) {
   // Inner local state for the form inputs
   const [recordType, setRecordType] = useState<'income' | 'expense'>('expense');
@@ -40,16 +52,40 @@ export function RecordFormModal({
   const [recordPayerId, setRecordPayerId] = useState<string>('');
   const [recordIsSettled, setRecordIsSettled] = useState<boolean>(false);
 
-  // Sync category selection whenever the type changes
+  // Sync state with initialData when modal opens or initialData changes
   useEffect(() => {
-    if (recordType === 'income') {
-      setRecordCategory('公費收入');
+    if (initialData) {
+      setRecordType(initialData.type);
+      setRecordCategory(initialData.category);
+      setRecordAmount(String(initialData.amount));
+      setRecordDate(initialData.date);
+      setRecordDescription(initialData.description || '');
+      setRecordPayerId(initialData.payerId || '');
+      setRecordIsSettled(!!initialData.isSettled);
+    } else if (isOpen) {
+      // Reset to defaults for "Add" mode when opening
+      setRecordType('expense');
+      setRecordCategory('生活雜費');
+      setRecordAmount('');
+      setRecordDate(new Date().toISOString().split('T')[0]);
+      setRecordDescription('');
       setRecordPayerId('');
       setRecordIsSettled(false);
-    } else {
-      setRecordCategory('生活雜費');
     }
-  }, [recordType]);
+  }, [initialData, isOpen]);
+
+  // Sync category selection whenever the type changes (only in "Add" mode)
+  useEffect(() => {
+    if (!initialData) {
+      if (recordType === 'income') {
+        setRecordCategory('公費收入');
+        setRecordPayerId('');
+        setRecordIsSettled(false);
+      } else {
+        setRecordCategory('生活雜費');
+      }
+    }
+  }, [recordType, initialData]);
 
   // Handle submit action
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,7 +94,7 @@ export function RecordFormModal({
       return; // Validation handled in parent or we validate here as well
     }
 
-    onAddRecord({
+    const data = {
       type: recordType,
       category: recordCategory,
       amount: Math.round(Number(recordAmount)),
@@ -66,13 +102,21 @@ export function RecordFormModal({
       description: recordDescription.trim(),
       payerId: recordPayerId || undefined,
       isSettled: recordPayerId ? recordIsSettled : undefined,
-    });
+    };
 
-    // Reset local inputs
-    setRecordAmount('');
-    setRecordDescription('');
-    setRecordPayerId('');
-    setRecordIsSettled(false);
+    if (initialData && onUpdateRecord) {
+      onUpdateRecord(initialData.id, data);
+    } else {
+      onAddRecord(data);
+    }
+
+    // Reset local inputs (only if not updating, or parent will close anyway)
+    if (!initialData) {
+      setRecordAmount('');
+      setRecordDescription('');
+      setRecordPayerId('');
+      setRecordIsSettled(false);
+    }
   };
 
   // Quick preset amounts handler
@@ -92,7 +136,9 @@ export function RecordFormModal({
           >
             <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="font-extrabold text-sm text-slate-800">建立公費明細</h3>
+                <h3 className="font-extrabold text-sm text-slate-800">
+                  {initialData ? '編輯公費明細' : '建立公費明細'}
+                </h3>
                 <span className="text-[9px] text-slate-400">Collaborative Single Group Mode</span>
               </div>
               <button 

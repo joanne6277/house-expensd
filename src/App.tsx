@@ -50,8 +50,9 @@ export default function App() {
 
   // Modal and Display controllers
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<BookkeepingRecord | null>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [currentChartTab, setCurrentChartTab] = useState<'pie' | 'bar'>('pie');
+  const [currentChartTab, setCurrentChartTab] = useState<'pie' | 'bar' | 'settlement'>('pie');
 
   // Feedback notifications standard toast state
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -256,6 +257,91 @@ export default function App() {
     setIsAddModalOpen(false);
   };
 
+  const handleEditRecord = (record: BookkeepingRecord) => {
+    setEditingRecord(record);
+    setIsAddModalOpen(true);
+  };
+
+  const handleUpdateRecordItem = async (id: string, data: {
+    type: 'income' | 'expense';
+    category: string;
+    amount: number;
+    date: string;
+    description: string;
+    payerId?: string;
+    isSettled?: boolean;
+  }) => {
+    const payer = data.payerId ? (members.find(m => m.userId === data.payerId) || null) : null;
+
+    const payload: Partial<BookkeepingRecord> = {
+      type: data.type,
+      category: data.category,
+      amount: data.amount,
+      date: data.date,
+      description: data.description,
+      payerId: data.payerId || null as any,
+      payerName: payer ? payer.nickname : '',
+      isSettled: data.payerId ? data.isSettled : false,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (isDbOnline && db) {
+      try {
+        const docRef = doc(db, 'household_ledgers', householdId, 'records', id);
+        await setDoc(docRef, payload, { merge: true });
+        triggerFeedback("帳目已更新成功！", "success");
+      } catch (err) {
+        triggerFeedback("更新失敗，請檢查網路連線", "error");
+        console.error(err);
+      }
+    } else {
+      const updated = records.map(r => r.id === id ? { ...r, ...payload } : r);
+      localStorage.setItem(`local_records_${householdId}`, JSON.stringify(updated));
+      setRecords(updated);
+      triggerFeedback("帳目已在本機更新成功！", "success");
+    }
+
+    setIsAddModalOpen(false);
+    setEditingRecord(null);
+  };
+
+  const handleBulkSettleMonth = async (month: string) => {
+    // Filter records in that specific month that are expenses, have a payer, and are NOT settled
+    const targets = records.filter(r => 
+      r.date.substring(0, 7) === month && 
+      r.type === 'expense' && 
+      !!r.payerId && 
+      !r.isSettled
+    );
+
+    if (targets.length === 0) {
+      triggerFeedback("此月份已無待結清的項目", "info");
+      return;
+    }
+
+    if (isDbOnline && db) {
+      try {
+        const updatePromises = targets.map(r => {
+          const docRef = doc(db, 'household_ledgers', householdId, 'records', r.id);
+          return setDoc(docRef, { isSettled: true }, { merge: true });
+        });
+        await Promise.all(updatePromises);
+        triggerFeedback(`已成功結清 ${targets.length} 筆帳目！`, "success");
+      } catch (err) {
+        triggerFeedback("批次結清失敗", "error");
+      }
+    } else {
+      const updated = records.map(r => 
+        (r.date.substring(0, 7) === month && !!r.payerId && !r.isSettled) 
+          ? { ...r, isSettled: true } 
+          : r
+      );
+      localStorage.setItem(`local_records_${householdId}`, JSON.stringify(updated));
+      setRecords(updated);
+      triggerFeedback(`已結清 ${targets.length} 筆帳目 (儲存於本機)`, "success");
+    }
+  };
+
   const handleToggleSettled = async (record: BookkeepingRecord) => {
     if (!record.payerId) return;
     const updatedStatus = !record.isSettled;
@@ -381,6 +467,8 @@ export default function App() {
           onChangeChartTab={setCurrentChartTab}
           categoryChartData={categoryChartData}
           dailyChartData={dailyChartData}
+          members={members}
+          onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
         />
 
         {/* FINANCIAL RECONCILIATIONS LIST */}
@@ -391,8 +479,12 @@ export default function App() {
           setFilterType={setFilterType}
           setFilterCategory={setFilterCategory}
           onDeleteRecord={handleDeleteRecord}
+          onEditRecord={handleEditRecord}
           onToggleSettled={handleToggleSettled}
-          onOpenAddModal={() => setIsAddModalOpen(true)}
+          onOpenAddModal={() => {
+            setEditingRecord(null);
+            setIsAddModalOpen(true);
+          }}
         />
       </main>
 
@@ -402,7 +494,10 @@ export default function App() {
           <button 
             type="button"
             id="nav-quick-add"
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setEditingRecord(null);
+              setIsAddModalOpen(true);
+            }}
             className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-3" />
@@ -424,9 +519,14 @@ export default function App() {
       {/* 1. DIALOG: NEW RECORD FORM POPUP */}
       <RecordFormModal 
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingRecord(null);
+        }}
         members={members}
+        initialData={editingRecord}
         onAddRecord={handleAddRecordItem}
+        onUpdateRecord={handleUpdateRecordItem}
       />
 
       {/* 2. DIALOG: SETTINGS & MEMBER LIST MANAGEMENT POPUP */}

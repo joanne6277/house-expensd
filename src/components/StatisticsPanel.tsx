@@ -6,21 +6,24 @@
 import React from 'react';
 import { 
   PieChart as PieChartIcon, 
-  BarChart3 as BarChart3Icon 
+  BarChart3 as BarChart3Icon,
+  Wallet
 } from 'lucide-react';
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend 
 } from 'recharts';
-import { BookkeepingRecord, PRESET_CATEGORIES } from '../types';
+import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember } from '../types';
 
 interface StatisticsPanelProps {
   filteredRecords: BookkeepingRecord[];
   selectedMonth: string;
   onSelectMonth: (month: string) => void;
-  currentChartTab: 'pie' | 'bar';
-  onChangeChartTab: (tab: 'pie' | 'bar') => void;
+  currentChartTab: 'pie' | 'bar' | 'settlement';
+  onChangeChartTab: (tab: 'pie' | 'bar' | 'settlement') => void;
   categoryChartData: { name: string; value: number }[];
   dailyChartData: { day: string; '收入': number; '支出': number }[];
+  members: LedgerMember[];
+  onBulkSettle: () => void;
 }
 
 export function StatisticsPanel({
@@ -31,8 +34,30 @@ export function StatisticsPanel({
   onChangeChartTab,
   categoryChartData,
   dailyChartData,
+  members,
+  onBulkSettle,
 }: StatisticsPanelProps) {
   
+  // Calculate unsettled prepayments grouped by payer
+  const unsettledPrepayments = React.useMemo(() => {
+    const map: { [payerId: string]: number } = {};
+    filteredRecords.forEach(rec => {
+      if (rec.type === 'expense' && rec.payerId && !rec.isSettled) {
+        map[rec.payerId] = (map[rec.payerId] || 0) + rec.amount;
+      }
+    });
+    return Object.entries(map).map(([payerId, amount]) => {
+      const member = members.find(m => m.userId === payerId);
+      return {
+        payerId,
+        payerName: member ? member.nickname : '未知成員',
+        amount
+      };
+    });
+  }, [filteredRecords, members]);
+
+  const totalUnsettled = unsettledPrepayments.reduce((sum, item) => sum + item.amount, 0);
+
   // Color mapper for Recharts slices
   const getSliceColorForCategory = (catName: string): string => {
     const matched = [
@@ -73,6 +98,13 @@ export function StatisticsPanel({
           >
             <BarChart3Icon className="w-3.5 h-3.5" />
           </button>
+          <button 
+            onClick={() => onChangeChartTab('settlement')}
+            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-indigo-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            title="代墊款項結算"
+          >
+            <Wallet className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -89,7 +121,45 @@ export function StatisticsPanel({
 
       {/* Canvas state container */}
       <div className="h-44 flex flex-col items-center justify-center">
-        {filteredRecords.length === 0 ? (
+        {currentChartTab === 'settlement' ? (
+          <div className="w-full h-full flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto pr-1">
+              {unsettledPrepayments.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                  <Wallet className="w-5 h-5 opacity-20" />
+                  <p className="text-[10px]">本月暫無待結清的代墊費用。</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {unsettledPrepayments.map(item => (
+                    <div key={item.payerId} className="flex items-center justify-between bg-slate-50/50 border border-slate-100 p-2 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold">
+                          {item.payerName[0]}
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-700">{item.payerName}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-400 font-medium">待還款金額</span>
+                        <span className="text-xs font-black text-rose-600 font-mono">${item.amount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {unsettledPrepayments.length > 0 && (
+              <button 
+                onClick={onBulkSettle}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-2 rounded-lg shadow-sm transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Wallet className="w-3 h-3" />
+                <span>一鍵結清本月所有代墊 (${totalUnsettled.toLocaleString()})</span>
+              </button>
+            )}
+          </div>
+        ) : filteredRecords.length === 0 ? (
           <div className="text-center py-6 flex flex-col items-center gap-1.5">
             <BarChart3Icon className="w-5 h-5 text-slate-300" />
             <p className="text-[10px] text-slate-400">目前本月尚無任何公費紀錄。</p>

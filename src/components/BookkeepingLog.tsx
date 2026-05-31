@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookkeepingRecord, PRESET_CATEGORIES } from '../types';
 import { CategoryIcon } from './CategoryIcon';
@@ -16,6 +16,7 @@ interface BookkeepingLogProps {
   setFilterType: (type: 'all' | 'income' | 'expense') => void;
   setFilterCategory: (category: string) => void;
   onDeleteRecord: (id: string) => void;
+  onEditRecord: (record: BookkeepingRecord) => void;
   onToggleSettled: (record: BookkeepingRecord) => void;
   onOpenAddModal: () => void;
 }
@@ -27,6 +28,7 @@ export function BookkeepingLog({
   setFilterType,
   setFilterCategory,
   onDeleteRecord,
+  onEditRecord,
   onToggleSettled,
   onOpenAddModal,
 }: BookkeepingLogProps) {
@@ -170,14 +172,25 @@ export function BookkeepingLog({
                       {isIncome ? `+$${rec.amount.toLocaleString()}` : `-$${rec.amount.toLocaleString()}`}
                     </span>
 
-                    <button 
-                      type="button"
-                      onClick={() => onDeleteRecord(rec.id)}
-                      className="text-slate-300 hover:text-rose-500 opacity-70 hover:opacity-100 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
-                      title="刪除項目"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        type="button"
+                        onClick={() => onEditRecord(rec)}
+                        className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
+                        title="編輯項目"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => onDeleteRecord(rec.id)}
+                        className="text-slate-300 hover:text-rose-500 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
+                        title="刪除項目"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               );
