@@ -40,17 +40,17 @@ export const PRESET_CATEGORIES = {
     { name: '其它收入', icon: 'TrendingUp', color: 'bg-teal-100 text-teal-700 hover:bg-teal-200' },
   ],
   expense: [
-    { name: '水電網路費', icon: 'Zap', color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
+    { name: '水費', icon: 'Droplets', color: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200' },
+    { name: '電費', icon: 'Zap', color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
+    { name: '網路費', icon: 'Wifi', color: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' },
     { name: '天然氣燃料', icon: 'Flame', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200' },
-    { name: '生活雜費', icon: 'ShoppingBag', color: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' },
-    { name: '食材雜貨', icon: 'Apple', color: 'bg-amber-100 text-amber-700 hover:bg-amber-200' },
-    { name: '修繕與維護', icon: 'Wrench', color: 'bg-rose-100 text-rose-700 hover:bg-rose-200' },
+    { name: '生活雜費', icon: 'ShoppingBag', color: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
     { name: '其它支出', icon: 'HelpCircle', color: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
   ]
 };
 
 export const MEMBER_COLORS = [
-  { name: '珊瑚橘', value: 'coral', hex: '#FF6B6B', bgClass: 'bg-rose-500', textClass: 'text-rose-500' },
+  { name: '統一橘', value: 'coral', hex: '#fa9016', bgClass: 'bg-rose-500', textClass: 'text-rose-500' },
   { name: '湖水綠', value: 'mint', hex: '#4EAD8A', bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' },
   { name: '晴空藍', value: 'sky', hex: '#4D96FF', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
   { name: '薰衣草', value: 'lavender', hex: '#9B5DE5', bgClass: 'bg-purple-500', textClass: 'text-purple-500' },

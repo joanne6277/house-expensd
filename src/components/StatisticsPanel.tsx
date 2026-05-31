@@ -66,13 +66,13 @@ export function StatisticsPanel({
     ].find(p => p.name === catName);
     
     if (matched) {
-      if (matched.name.includes('水電')) return '#3182CE';
-      if (matched.name.includes('瓦斯') || matched.name.includes('天然氣')) return '#ED8936';
-      if (matched.name.includes('雜費')) return '#667EEA';
-      if (matched.name.includes('生鮮') || matched.name.includes('食材')) return '#ECC94B';
-      if (matched.name.includes('修繕')) return '#E53E3E';
-      if (matched.name.includes('撥款')) return '#38A169';
-      if (matched.name.includes('公費')) return '#48BB78';
+      if (matched.name.includes('水費')) return '#06B6D4'; // cyan-500
+      if (matched.name.includes('電費')) return '#3B82F6'; // blue-500
+      if (matched.name.includes('網路')) return '#6366F1'; // indigo-500
+      if (matched.name.includes('瓦斯') || matched.name.includes('天然氣')) return '#F97316'; // orange-500
+      if (matched.name.includes('雜費')) return '#64748B'; // slate-500
+      if (matched.name.includes('撥款')) return '#10B981'; // emerald-500
+      if (matched.name.includes('公費')) return '#059669'; // emerald-600
     }
     return '#718096'; // fallback slate/gray
   };
