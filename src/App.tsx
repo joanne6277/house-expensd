@@ -9,8 +9,6 @@ import { Plus, Users } from 'lucide-react';
 // Import Types and presets
 import { BookkeepingRecord, LedgerMember } from './types';
 
-// Import Sample Data
-import { SAMPLE_MEMBERS, SAMPLE_RECORDS } from './sampleData';
 
 // Import Firebase
 import { db, isFirebaseConfigured, handleFirestoreError, OperationType } from './firebase';
@@ -33,7 +31,7 @@ export default function App() {
 
   const [householdName, setHouseholdName] = useState<string>("家庭公費協作帳本");
   const [records, setRecords] = useState<BookkeepingRecord[]>([]);
-  const [members, setMembers] = useState<LedgerMember[]>(SAMPLE_MEMBERS);
+  const [members, setMembers] = useState<LedgerMember[]>([]);
 
   // Local active session identity (who is holding the device)
   const [currentMemberId, setCurrentMemberId] = useState<string>(() => {
@@ -105,15 +103,7 @@ export default function App() {
         snapshot.forEach((docSnap) => {
           loadedMembers.push(docSnap.data() as LedgerMember);
         });
-        if (loadedMembers.length > 0) {
-          setMembers(loadedMembers);
-        } else {
-          // Seed members to cloud if missing
-          SAMPLE_MEMBERS.forEach(async (m) => {
-            await setDoc(doc(db, 'household_ledgers', householdId, 'members', m.userId), m);
-          });
-          setMembers(SAMPLE_MEMBERS);
-        }
+        setMembers(loadedMembers);
       }, (error) => {
         handleFirestoreError(error, OperationType.LIST, `household_ledgers/${householdId}/members`);
       });
@@ -137,17 +127,11 @@ export default function App() {
       const cachedRecords = localStorage.getItem(`local_records_${householdId}`);
       if (cachedRecords) {
         setRecords(JSON.parse(cachedRecords));
-      } else {
-        localStorage.setItem(`local_records_${householdId}`, JSON.stringify(SAMPLE_RECORDS));
-        setRecords(SAMPLE_RECORDS);
       }
 
       const cachedMembers = localStorage.getItem(`local_members_${householdId}`);
       if (cachedMembers) {
         setMembers(JSON.parse(cachedMembers));
-      } else {
-        localStorage.setItem(`local_members_${householdId}`, JSON.stringify(SAMPLE_MEMBERS));
-        setMembers(SAMPLE_MEMBERS);
       }
     }
   }, [isDbOnline]);
@@ -234,16 +218,22 @@ export default function App() {
   }) => {
     const payer = data.payerId ? (members.find(m => m.userId === data.payerId) || null) : null;
 
-    const payload: Omit<BookkeepingRecord, 'id'> = {
+    const currentUser = members.find(m => m.userId === currentMemberId);
+    const payload: Partial<BookkeepingRecord> = {
+      createdBy: currentMemberId,
+      creatorName: currentUser ? currentUser.nickname : "Unknown",
       type: data.type,
       category: data.category,
       amount: data.amount,
       date: data.date,
       description: data.description,
-      payerId: data.payerId || undefined,
-      payerName: payer ? payer.nickname : undefined,
-      isSettled: data.payerId ? data.isSettled : undefined,
     };
+
+    if (data.payerId) {
+      payload.payerId = data.payerId;
+      payload.payerName = payer ? payer.nickname : '';
+      payload.isSettled = data.isSettled;
+    }
 
     const newRecordId = 'rec_' + Date.now();
 

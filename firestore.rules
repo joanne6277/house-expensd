@@ -9,7 +9,7 @@ service cloud.firestore {
 
     // Helper functions
     function isSignedIn() {
-      return request.auth != null;
+      return true; // Relaxed for anonymous/live link mode
     }
 
     function isValidId(id) {
@@ -38,13 +38,13 @@ service cloud.firestore {
         && data.category is string && data.category.size() > 0 && data.category.size() <= 100
         && data.amount is number && data.amount >= 0
         && data.date is string && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
-        && data.createdBy is string && data.createdBy == request.auth.uid
+        && data.createdBy is string
         && data.creatorName is string && data.creatorName.size() > 0 && data.creatorName.size() <= 100;
     }
 
     // Members Validation
     function isValidLedgerMember(data) {
-      return data.userId is string && data.userId == request.auth.uid
+      return data.userId is string 
         && data.nickname is string && data.nickname.size() > 0 && data.nickname.size() <= 100
         && data.color is string && data.color.size() <= 50;
     }
@@ -60,7 +60,7 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow create: if isSignedIn() && isValidBookkeepingRecord(incoming()) && isValidId(recordId);
         allow update: if isSignedIn() && isValidBookkeepingRecord(incoming()) && isValidId(recordId);
-        allow delete: if isSignedIn() && existing().createdBy == request.auth.uid && isValidId(recordId);
+        allow delete: if isSignedIn() && true /* Relaxed for anonymous/live link mode */ && isValidId(recordId);
       }
 
       match /members/{memberId} {
