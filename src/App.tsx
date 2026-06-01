@@ -43,8 +43,10 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    // Default to previous month
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = prevDate.getFullYear();
+    const month = String(prevDate.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
   });
 
@@ -52,7 +54,7 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BookkeepingRecord | null>(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [currentChartTab, setCurrentChartTab] = useState<'pie' | 'bar' | 'settlement'>('pie');
+  const [currentChartTab, setCurrentChartTab] = useState<'pie' | 'settlement'>('pie');
 
   // Feedback notifications standard toast state
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -153,11 +155,33 @@ export default function App() {
     });
   }, [records, selectedMonth, filterType, filterCategory]);
 
+  const allTimeFilteredRecords = useMemo(() => {
+    return records.filter(rec => {
+      if (filterType !== 'all' && rec.type !== filterType) return false;
+      if (filterCategory !== 'all' && rec.category !== filterCategory) return false;
+      return true;
+    });
+  }, [records, filterType, filterCategory]);
+
   const monthlyMetrics = useMemo(() => {
     let incomeSum = 0;
     let expenseSum = 0;
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
     records.forEach(rec => {
-      if (rec.date.substring(0, 7) === selectedMonth) {
+      // Lifetime totals
+      if (rec.type === 'income') {
+        totalIncome += rec.amount;
+      } else {
+        totalExpense += rec.amount;
+      }
+
+      // Current actual month totals (not selectedMonth)
+      if (rec.date.substring(0, 7) === currentMonthStr) {
         if (rec.type === 'income') {
           incomeSum += rec.amount;
         } else {
@@ -165,12 +189,13 @@ export default function App() {
         }
       }
     });
+
     return {
       income: incomeSum,
       expense: expenseSum,
-      net: incomeSum - expenseSum
+      net: totalIncome - totalExpense
     };
-  }, [records, selectedMonth]);
+  }, [records]);
 
   const categoryChartData = useMemo(() => {
     const categoryTotals: { [key: string]: number } = {};
@@ -466,14 +491,13 @@ export default function App() {
           currentChartTab={currentChartTab}
           onChangeChartTab={setCurrentChartTab}
           categoryChartData={categoryChartData}
-          dailyChartData={dailyChartData}
           members={members}
           onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
         />
 
         {/* FINANCIAL RECONCILIATIONS LIST */}
         <BookkeepingLog 
-          filteredRecords={filteredRecords}
+          filteredRecords={allTimeFilteredRecords}
           filterType={filterType}
           filterCategory={filterCategory}
           setFilterType={setFilterType}
@@ -498,7 +522,7 @@ export default function App() {
               setEditingRecord(null);
               setIsAddModalOpen(true);
             }}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
+            className="btn-primary flex-1 text-xs"
           >
             <Plus className="w-4 h-4 stroke-3" />
             <span>記一筆公費</span>

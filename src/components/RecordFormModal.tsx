@@ -170,7 +170,7 @@ export function RecordFormModal({
                   onClick={() => setRecordType('income')}
                   className={`py-1.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
                     recordType === 'income' 
-                      ? 'bg-emerald-500 text-white shadow-xs' 
+                      ? 'bg-brand-500 text-white shadow-xs' 
                       : 'text-slate-600 hover:bg-slate-200/50'
                   }`}
                 >
@@ -182,7 +182,7 @@ export function RecordFormModal({
               {recordType === 'expense' && (
                 <>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-500">此筆由誰代墊？ (選填)</label>
+                    <label className="label-sm">此筆由誰代墊？ (選填)</label>
                     <select
                       value={recordPayerId}
                       onChange={(e) => {
@@ -191,7 +191,7 @@ export function RecordFormModal({
                           setRecordIsSettled(false);
                         }
                       }}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold focus:outline-hidden focus:border-indigo-600 focus:bg-white text-slate-800"
+                      className="input-field"
                     >
                       <option value="">🏦 公費直接支付 (不需代墊)</option>
                       {members.map(m => (
@@ -208,7 +208,7 @@ export function RecordFormModal({
                         type="checkbox"
                         checked={recordIsSettled}
                         onChange={(e) => setRecordIsSettled(e.target.checked)}
-                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
+                        className="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500 cursor-pointer"
                       />
                       <label htmlFor="input-is-settled-checkbox" className="text-xs font-bold text-amber-900 select-none cursor-pointer">
                         此代墊款項已結清還款 (打勾代表已還款)
@@ -220,7 +220,7 @@ export function RecordFormModal({
 
               {/* Amount */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-500">往來金額 (NTD)</label>
+                <label className="label-sm">往來金額 (NTD)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">$</span>
                   <input
@@ -230,7 +230,7 @@ export function RecordFormModal({
                     required
                     value={recordAmount}
                     onChange={(e) => setRecordAmount(e.target.value)}
-                    className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 font-extrabold rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-hidden focus:border-indigo-600 font-mono"
+                    className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 font-extrabold rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-hidden focus:border-brand-600 font-mono"
                     autoFocus
                   />
                 </div>
@@ -252,7 +252,7 @@ export function RecordFormModal({
 
               {/* Category Selection Grid */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-500">選取分類</label>
+                <label className="label-sm">選取分類</label>
                 <div className="grid grid-cols-3 gap-1.5">
                   {(recordType === 'expense' ? PRESET_CATEGORIES.expense : PRESET_CATEGORIES.income).map(cat => {
                     const isSelected = recordCategory === cat.name;
@@ -263,11 +263,11 @@ export function RecordFormModal({
                         onClick={() => setRecordCategory(cat.name)}
                         className={`py-1.5 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center gap-1 border transition cursor-pointer truncate ${
                           isSelected 
-                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700' 
+                            ? 'bg-brand-50 border-brand-500 text-brand-700' 
                             : 'bg-white border-slate-200/80 hover:bg-slate-50'
                         }`}
                       >
-                        <CategoryIcon name={cat.name} className={`w-3.5 h-3.5 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+                        <CategoryIcon name={cat.name} className={`w-3.5 h-3.5 ${isSelected ? 'text-brand-600' : 'text-slate-400'}`} />
                         <span className="truncate w-full text-center">{cat.name}</span>
                       </button>
                     );
@@ -277,25 +277,25 @@ export function RecordFormModal({
 
               {/* Calendar Date */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-500">往來日期</label>
+                <label className="label-sm">往來日期</label>
                 <input
                   type="date"
                   required
                   value={recordDate}
                   onChange={(e) => setRecordDate(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold focus:outline-hidden focus:border-indigo-600"
+                  className="input-field"
                 />
               </div>
 
               {/* Description memo */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-500">備註 (備忘備註，選填)</label>
+                <label className="label-sm">備註 (備忘備註，選填)</label>
                 <input
                   type="text"
                   placeholder="例如：大潤發家庭採買"
                   value={recordDescription}
                   onChange={(e) => setRecordDescription(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:outline-hidden focus:border-indigo-600 text-slate-800"
+                  className="input-field"
                   maxLength={100}
                 />
               </div>

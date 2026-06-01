@@ -35,7 +35,7 @@ export function BookkeepingLog({
   return (
     <section id="bookings-log" className="flex flex-col gap-2.5">
       <div className="flex flex-col gap-1.5">
-        <h3 className="font-bold text-xs text-slate-800 tracking-tight">家庭公費支出與入帳清單</h3>
+        <h3 className="card-title">家庭公費支出與入帳清單</h3>
         
         {/* Horizontal Filter tags */}
         <div id="filter-controls" className="flex gap-1 overflow-x-auto pb-1 select-none">
@@ -55,7 +55,7 @@ export function BookkeepingLog({
             onClick={() => { setFilterType('income'); setFilterCategory('all'); }}
             className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
               filterType === 'income' 
-                ? 'bg-emerald-600 text-white' 
+                ? 'bg-brand-600 text-white' 
                 : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
             }`}
           >
@@ -81,11 +81,7 @@ export function BookkeepingLog({
                 setFilterType(filterType === 'all' ? 'expense' : filterType);
                 setFilterCategory(cat.name);
               }}
-              className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
-                filterCategory === cat.name
-                  ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
-              }`}
+              className={filterCategory === cat.name ? 'filter-tag-active' : 'filter-tag'}
             >
               {cat.name}
             </button>
@@ -101,7 +97,7 @@ export function BookkeepingLog({
             <button 
               type="button"
               onClick={onOpenAddModal}
-              className="mt-2 text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2.5 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100 cursor-pointer"
+              className="mt-2 text-[10px] btn-brand-ghost"
             >
               新增一筆
             </button>
@@ -117,11 +113,11 @@ export function BookkeepingLog({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -50 }}
-                  className="bg-white rounded-xl p-3 border border-slate-200 hover:border-indigo-200 shadow-3xs flex items-center justify-between transition group"
+                  className="bg-white rounded-xl p-3 border border-slate-200 hover:border-brand-200 shadow-3xs flex items-center justify-between transition group"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      isIncome ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                      isIncome ? 'bg-brand-50 text-brand-600' : 'bg-rose-50 text-rose-600'
                     }`}>
                       <CategoryIcon name={rec.category} className="w-4 h-4" />
                     </div>
@@ -141,7 +137,7 @@ export function BookkeepingLog({
                             }}
                             className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 cursor-pointer transition border ${
                               rec.isSettled 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                                ? 'bg-brand-50 text-brand-700 border-brand-200 hover:bg-brand-100' 
                                 : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 animate-pulse'
                             }`}
                             title="點擊可直接切換結清狀態"
@@ -151,7 +147,7 @@ export function BookkeepingLog({
                             <span className="font-extrabold">{rec.isSettled ? '已結清 ✅' : '未結清(點此結結清)'}</span>
                           </button>
                         ) : (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100/60">
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-100/60">
                             🏦 公費直付
                           </span>
                         )}
@@ -162,13 +158,13 @@ export function BookkeepingLog({
                       </div>
                       
                       <h4 className="font-bold text-xs text-slate-800 mt-1 truncate">
-                        {rec.description || `${rec.category}往來記錄`}
+                        {rec.description || rec.category}
                       </h4>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 pl-2">
-                    <span className={`font-mono text-xs font-black shrink-0 ${isIncome ? 'text-emerald-600' : 'text-slate-800'}`}>
+                    <span className={`font-mono text-xs font-black shrink-0 ${isIncome ? 'text-brand-600' : 'text-slate-800'}`}>
                       {isIncome ? `+$${rec.amount.toLocaleString()}` : `-$${rec.amount.toLocaleString()}`}
                     </span>
 
@@ -176,7 +172,7 @@ export function BookkeepingLog({
                       <button 
                         type="button"
                         onClick={() => onEditRecord(rec)}
-                        className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
+                        className="text-slate-400 hover:text-brand-600 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
                         title="編輯項目"
                       >
                         <Pencil className="w-3.5 h-3.5" />

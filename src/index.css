@@ -1,1 +1,87 @@
 @import "tailwindcss";
+
+@theme {
+  /* Alias the brand color to stone */
+  --color-brand-50: var(--color-stone-50);
+  --color-brand-100: var(--color-stone-100);
+  --color-brand-200: var(--color-stone-200);
+  --color-brand-300: var(--color-stone-300);
+  --color-brand-400: var(--color-stone-400);
+  --color-brand-500: var(--color-stone-500);
+  --color-brand-600: var(--color-stone-600);
+  --color-brand-700: var(--color-stone-700);
+  --color-brand-800: var(--color-stone-800);
+  --color-brand-900: var(--color-stone-900);
+  --color-brand-950: var(--color-stone-950);
+}
+
+@layer components {
+  /* Layout Base */
+  .container-sm {
+    @apply max-w-md w-full mx-auto px-4;
+  }
+
+  /* Shared UI Structures */
+  .card {
+    @apply bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col gap-3;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between;
+  }
+
+  .card-title {
+    @apply font-bold text-xs text-slate-800 tracking-tight;
+  }
+
+  /* Interaction Primitives */
+  .btn {
+    @apply transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5;
+  }
+
+  .btn-primary {
+    @apply transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold py-2 px-3 rounded-xl;
+  }
+
+  .btn-outline {
+    @apply transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 py-1 px-2.5 rounded-md text-[10px] font-bold shrink-0;
+  }
+
+  .btn-ghost {
+    @apply p-1.5 rounded-lg transition cursor-pointer hover:bg-white/10;
+  }
+
+  .btn-brand-ghost {
+    @apply transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-brand-50 text-brand-700 font-bold px-2.5 py-1 rounded-lg border border-brand-200 hover:bg-brand-100;
+  }
+
+  .filter-tag {
+    @apply px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-100;
+  }
+
+  .filter-tag-active {
+    @apply px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer bg-brand-50 border-brand-500 text-brand-700;
+  }
+
+  /* Form Elements */
+  .input-field {
+    @apply w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium;
+  }
+
+  .label-sm {
+    @apply text-[10px] font-bold text-slate-500 tracking-wider uppercase;
+  }
+
+  /* Visual Accents */
+  .badge-status {
+    @apply flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border;
+  }
+
+  .avatar-circle {
+    @apply w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold;
+  }
+}

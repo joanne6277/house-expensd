@@ -35,8 +35,8 @@ export interface LedgerMember {
 
 export const PRESET_CATEGORIES = {
   income: [
-    { name: '公費撥款', icon: 'Coins', color: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' },
-    { name: '公費收入', icon: 'PlusCircle', color: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' },
+    { name: '公費撥款', icon: 'Coins', color: 'bg-brand-100 text-brand-700 hover:bg-brand-200' },
+    { name: '公費收入', icon: 'PlusCircle', color: 'bg-brand-100 text-brand-700 hover:bg-brand-200' },
     { name: '其它收入', icon: 'TrendingUp', color: 'bg-teal-100 text-teal-700 hover:bg-teal-200' },
   ],
   expense: [

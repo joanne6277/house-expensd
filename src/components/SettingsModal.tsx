@@ -69,7 +69,7 @@ export function SettingsModal({
               
               {/* Ledger metadata title modifier */}
               <div className="flex flex-col gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <h4 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">設定家庭帳簿基本名稱</h4>
+                <h4 className="label-sm">設定家庭帳簿基本名稱</h4>
                 
                 <div className="flex flex-col gap-1">
                   <input
@@ -77,14 +77,14 @@ export function SettingsModal({
                     placeholder="修改後的家庭名稱"
                     value={newHouseholdNameInput}
                     onChange={(e) => setNewHouseholdNameInput(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:outline-hidden focus:border-indigo-500"
+                    className="input-field"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={handleUpdateName}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+                  className="btn-primary w-full text-xs py-1.5 rounded-lg"
                 >
                   隨時確認修改
                 </button>
@@ -92,7 +92,7 @@ export function SettingsModal({
 
               {/* Collaboration Member Management */}
               <div className="flex flex-col gap-2 border-t border-slate-100 pt-3">
-                <h4 className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">新增其他的協作家庭成員</h4>
+                <h4 className="label-sm">新增其他的協作家庭成員</h4>
                 
                 <div className="flex flex-col gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <input
@@ -100,7 +100,7 @@ export function SettingsModal({
                     placeholder="新成員稱呼 e.g. 阿嬤"
                     value={newSimulatedMemberName}
                     onChange={(e) => setNewSimulatedMemberName(e.target.value)}
-                    className="w-full bg-white border border-slate-200 card-inner rounded-md px-2.5 py-1.5 text-xs text-slate-800 font-medium"
+                    className="input-field"
                   />
                   
                   <div className="flex items-center gap-1.5">
@@ -108,7 +108,7 @@ export function SettingsModal({
                     <select
                       value={newSimulatedMemberColor}
                       onChange={(e) => setNewSimulatedMemberColor(e.target.value)}
-                      className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs text-slate-700"
+                      className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-xs text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-medium"
                     >
                       <option value="sky">晴空藍</option>
                       <option value="coral">珊瑚橘</option>
@@ -121,7 +121,7 @@ export function SettingsModal({
                   <button
                     type="button"
                     onClick={handleCreateMember}
-                    className="bg-slate-900 hover:bg-slate-800 text-white w-full py-1.5 rounded text-xs font-bold cursor-pointer mt-1"
+                    className="btn w-full bg-slate-900 hover:bg-slate-800 text-white py-1.5 rounded text-xs font-bold mt-1"
                   >
                     確認加入群組
                   </button>
@@ -131,7 +131,7 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full bg-slate-100 text-slate-600 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="btn-secondary w-full"
               >
                 關閉配置頁
               </button>

@@ -21,9 +21,9 @@ export function CollaboratorsRow({
   onOpenConfig,
 }: CollaboratorsRowProps) {
   return (
-    <section id="collaborators-section" className="bg-white rounded-xl p-4 border border-slate-200 shadow-3xs">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[10px] font-bold text-slate-500 tracking-wider uppercase flex items-center gap-1">
+    <section id="collaborators-section" className="card">
+      <div className="card-header mb-2">
+        <h3 className="label-sm flex items-center gap-1">
           <Users className="w-3.5 h-3.5 text-slate-400" />
           <span>點選切換目前記帳身分:</span>
         </h3>
@@ -40,13 +40,13 @@ export function CollaboratorsRow({
               onClick={() => onSelectMember(member.userId, member.nickname)}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition cursor-pointer font-medium ${
                 isActiveSim 
-                  ? 'bg-slate-900 text-white font-semibold shadow-xs scale-102' 
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs scale-[1.02]' 
                   : 'bg-slate-50 text-slate-600 border border-slate-200/60 hover:bg-slate-100'
               }`}
             >
               <span className={`w-2 h-2 rounded-full ${colorInfo.bgClass}`}></span>
               <span>{member.nickname}</span>
-              {isActiveSim && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+              {isActiveSim && <Check className="w-3.5 h-3.5 text-brand-400" />}
             </button>
           );
         })}
@@ -54,7 +54,7 @@ export function CollaboratorsRow({
         <button
           id="invite-btn"
           onClick={onOpenConfig}
-          className="w-7 h-7 rounded-full border border-dashed border-slate-300 text-slate-400 hover:text-indigo-600 hover:border-indigo-400 flex items-center justify-center cursor-pointer transition"
+          className="avatar-circle border border-dashed border-slate-300 text-slate-400 hover:text-brand-600 hover:border-brand-400 cursor-pointer transition"
           title="新增家庭成員"
         >
           <Plus className="w-3.5 h-3.5" />

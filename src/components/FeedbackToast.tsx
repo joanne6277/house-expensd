@@ -22,7 +22,7 @@ export function FeedbackToast({ message, onClose }: FeedbackToastProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 max-w-sm w-[90%] ${
-            message.type === 'success' ? 'bg-emerald-600 text-white' : 
+            message.type === 'success' ? 'bg-brand-600 text-white' : 
             message.type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white'
           }`}
         >

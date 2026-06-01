@@ -6,11 +6,12 @@
 import React from 'react';
 import { 
   PieChart as PieChartIcon, 
-  BarChart3 as BarChart3Icon,
-  Wallet
+  Wallet,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
-  ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend 
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
 } from 'recharts';
 import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember } from '../types';
 
@@ -18,10 +19,9 @@ interface StatisticsPanelProps {
   filteredRecords: BookkeepingRecord[];
   selectedMonth: string;
   onSelectMonth: (month: string) => void;
-  currentChartTab: 'pie' | 'bar' | 'settlement';
-  onChangeChartTab: (tab: 'pie' | 'bar' | 'settlement') => void;
+  currentChartTab: 'pie' | 'settlement';
+  onChangeChartTab: (tab: 'pie' | 'settlement') => void;
   categoryChartData: { name: string; value: number }[];
-  dailyChartData: { day: string; '收入': number; '支出': number }[];
   members: LedgerMember[];
   onBulkSettle: () => void;
 }
@@ -33,7 +33,6 @@ export function StatisticsPanel({
   currentChartTab,
   onChangeChartTab,
   categoryChartData,
-  dailyChartData,
   members,
   onBulkSettle,
 }: StatisticsPanelProps) {
@@ -68,7 +67,7 @@ export function StatisticsPanel({
     if (matched) {
       if (matched.name.includes('水費')) return '#06B6D4'; // cyan-500
       if (matched.name.includes('電費')) return '#3B82F6'; // blue-500
-      if (matched.name.includes('網路')) return '#6366F1'; // indigo-500
+      if (matched.name.includes('網路')) return '#10B981'; // emerald-500
       if (matched.name.includes('瓦斯') || matched.name.includes('天然氣')) return '#F97316'; // orange-500
       if (matched.name.includes('雜費')) return '#64748B'; // slate-500
       if (matched.name.includes('撥款')) return '#10B981'; // emerald-500
@@ -77,30 +76,31 @@ export function StatisticsPanel({
     return '#718096'; // fallback slate/gray
   };
 
+  const handleMonthOffset = (offset: number) => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const date = new Date(year, month - 1 + offset, 1);
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    onSelectMonth(`${newYear}-${newMonth}`);
+  };
+
   return (
-    <section id="recharts-visuals-card" className="bg-white rounded-xl p-4 border border-slate-200 shadow-3xs flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-xs text-slate-800 tracking-tight">本月收支圓餅與趨勢圖</h3>
+    <section id="recharts-visuals-card" className="card">
+      <div className="card-header">
+        <h3 className="card-title">本月收支圓餅與待結算</h3>
         
         {/* Chart toggle switch */}
         <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
           <button 
             onClick={() => onChangeChartTab('pie')}
-            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-indigo-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             title="支出類別佔比"
           >
             <PieChartIcon className="w-3.5 h-3.5" />
           </button>
           <button 
-            onClick={() => onChangeChartTab('bar')}
-            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'bar' ? 'bg-white text-indigo-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
-            title="每日往來趨勢"
-          >
-            <BarChart3Icon className="w-3.5 h-3.5" />
-          </button>
-          <button 
             onClick={() => onChangeChartTab('settlement')}
-            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-indigo-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
             title="代墊款項結算"
           >
             <Wallet className="w-3.5 h-3.5" />
@@ -111,12 +111,26 @@ export function StatisticsPanel({
       {/* Month selective controller */}
       <div className="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
         <span className="text-[10px] text-slate-500 font-bold">查看月份: </span>
-        <input 
-          type="month" 
-          value={selectedMonth}
-          onChange={(e) => onSelectMonth(e.target.value)}
-          className="bg-white border border-slate-200 text-xs rounded-md px-2 py-0.5 font-bold font-mono text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-        />
+        <div className="flex items-center gap-1.5">
+          <button 
+            onClick={() => handleMonthOffset(-1)}
+            className="p-1 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <input 
+            type="month" 
+            value={selectedMonth}
+            onChange={(e) => onSelectMonth(e.target.value)}
+            className="bg-white border border-slate-200 text-xs rounded-md px-2 py-0.5 font-bold font-mono text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+          />
+          <button 
+            onClick={() => handleMonthOffset(1)}
+            className="p-1 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Canvas state container */}
@@ -134,7 +148,7 @@ export function StatisticsPanel({
                   {unsettledPrepayments.map(item => (
                     <div key={item.payerId} className="flex items-center justify-between bg-slate-50/50 border border-slate-100 p-2 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-bold">
+                        <div className="avatar-circle bg-emerald-100 text-emerald-600">
                           {item.payerName[0]}
                         </div>
                         <span className="text-[11px] font-bold text-slate-700">{item.payerName}</span>
@@ -152,7 +166,7 @@ export function StatisticsPanel({
             {unsettledPrepayments.length > 0 && (
               <button 
                 onClick={onBulkSettle}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold py-2 rounded-lg shadow-sm transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
+                className="btn-primary w-full text-[10px] py-2 rounded-lg"
               >
                 <Wallet className="w-3 h-3" />
                 <span>一鍵結清本月所有代墊 (${totalUnsettled.toLocaleString()})</span>
@@ -161,10 +175,10 @@ export function StatisticsPanel({
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="text-center py-6 flex flex-col items-center gap-1.5">
-            <BarChart3Icon className="w-5 h-5 text-slate-300" />
-            <p className="text-[10px] text-slate-400">目前本月尚無任何公費紀錄。</p>
+            <PieChartIcon className="w-5 h-5 text-slate-300" />
+            <p className="text-[10px] text-slate-400">目前本月尚無 any 公費紀錄。</p>
           </div>
-        ) : currentChartTab === 'pie' ? (
+        ) : (
           categoryChartData.length === 0 ? (
             <div className="text-center text-[10px] text-slate-400 py-6">
               本月無任何「公費支出」項目。
@@ -205,18 +219,6 @@ export function StatisticsPanel({
               </div>
             </div>
           )
-        ) : (
-          // Chronological daily bar chart
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dailyChartData}>
-              <XAxis dataKey="day" tick={{ fontSize: 8 }} tickLine={false} />
-              <YAxis tick={{ fontSize: 8 }} tickLine={false} width={25} />
-              <Tooltip formatter={(value) => [`$${value}`]} />
-              <Legend wrapperStyle={{ fontSize: 8 }} />
-              <Bar dataKey="收入" fill="#38A169" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="支出" fill="#E53E3E" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
         )}
       </div>
     </section>
