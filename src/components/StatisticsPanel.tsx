@@ -85,9 +85,9 @@ export function StatisticsPanel({
   };
 
   return (
-    <section id="recharts-visuals-card" className="card">
-      <div className="card-header">
-        <h3 className="card-title">本月收支圓餅與待結算</h3>
+    <section id="recharts-visuals-card" className="bg-white rounded-xl p-4 border border-slate-200 shadow-3xs flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-xs text-slate-800 tracking-tight">本月收支圓餅與待結算</h3>
         
         {/* Chart toggle switch */}
         <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
@@ -148,7 +148,7 @@ export function StatisticsPanel({
                   {unsettledPrepayments.map(item => (
                     <div key={item.payerId} className="flex items-center justify-between bg-slate-50/50 border border-slate-100 p-2 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="avatar-circle bg-emerald-100 text-emerald-600">
+                        <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold">
                           {item.payerName[0]}
                         </div>
                         <span className="text-[11px] font-bold text-slate-700">{item.payerName}</span>
@@ -166,7 +166,7 @@ export function StatisticsPanel({
             {unsettledPrepayments.length > 0 && (
               <button 
                 onClick={onBulkSettle}
-                className="btn-primary w-full text-[10px] py-2 rounded-lg"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-2 rounded-lg shadow-sm transition active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Wallet className="w-3 h-3" />
                 <span>一鍵結清本月所有代墊 (${totalUnsettled.toLocaleString()})</span>
@@ -176,7 +176,7 @@ export function StatisticsPanel({
         ) : filteredRecords.length === 0 ? (
           <div className="text-center py-6 flex flex-col items-center gap-1.5">
             <PieChartIcon className="w-5 h-5 text-slate-300" />
-            <p className="text-[10px] text-slate-400">目前本月尚無 any 公費紀錄。</p>
+            <p className="text-[10px] text-slate-400">目前本月尚無任何公費紀錄。</p>
           </div>
         ) : (
           categoryChartData.length === 0 ? (
@@ -206,7 +206,7 @@ export function StatisticsPanel({
                 </ResponsiveContainer>
               </div>
               {/* Legend listing */}
-              <div className="w-[50%] text-[9px] flex flex-col gap-1 overflow-y-auto max-h-[140px] pl-1 select-none">
+              <div className="w-[50%] text-[9px] flex flex-col gap-1 overflow-y-auto max-h-35 pl-1 select-none">
                 {categoryChartData.map((item) => (
                   <div key={item.name} className="flex items-center justify-between gap-1 w-full border-b border-dashed border-slate-100 pb-0.5">
                     <div className="flex items-center gap-1 min-w-0">
