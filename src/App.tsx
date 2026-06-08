@@ -97,7 +97,8 @@ export default function App() {
         } else {
           setDoc(ledgerRef, {
             id: householdId,
-            name: "公用家庭帳本",
+            name: LEDGER_TABS[activeLedgerIdx].defaultName,
+            monthlyBudget: 0,
             createdAt: new Date().toISOString()
           }, { merge: true }).catch(err => console.error("Error initializing ledger:", err));
         }
@@ -489,7 +490,7 @@ export default function App() {
     if (isDbOnline && db) {
       try {
         const ref = doc(db, 'household_ledgers', householdId);
-        await setDoc(ref, { id: householdId, name: updatedName }, { merge: true });
+        await setDoc(ref, { id: householdId, name: updatedName, monthlyBudget: 0 }, { merge: true });
         triggerFeedback("基本資料已同步更新至雲端！", "success");
       } catch (err) {
         triggerFeedback("更新失敗", "error");
