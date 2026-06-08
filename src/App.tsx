@@ -26,7 +26,7 @@ import { SettingsModal } from './components/SettingsModal';
 
 const LEDGER_TABS: { id: string; defaultName: string; mode: LedgerMode }[] = [
   { id: 'shared-family-ledger', defaultName: '家庭公費帳本', mode: 'shared' },
-  { id: 'second-ledger', defaultName: '雙人分帳', mode: 'split' },
+  { id: 'second-ledger', defaultName: '其他分帳', mode: 'split' },
 ];
 
 export default function App() {
