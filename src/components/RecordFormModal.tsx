@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LedgerMember, PRESET_CATEGORIES, BookkeepingRecord } from '../types';
+import { LedgerMember, PRESET_CATEGORIES, SPLIT_CATEGORIES, BookkeepingRecord, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 
 export interface RecordFormModalProps {
@@ -13,6 +13,7 @@ export interface RecordFormModalProps {
   onClose: () => void;
   members: LedgerMember[];
   initialData?: BookkeepingRecord | null;
+  ledgerMode?: LedgerMode;
   onAddRecord: (data: {
     type: 'income' | 'expense';
     category: string;
@@ -38,9 +39,11 @@ export function RecordFormModal({
   onClose,
   members,
   initialData,
+  ledgerMode = 'shared',
   onAddRecord,
   onUpdateRecord,
 }: RecordFormModalProps) {
+  const isSplit = ledgerMode === 'split';
   // Inner local state for the form inputs
   const [recordType, setRecordType] = useState<'income' | 'expense'>('expense');
   const [recordCategory, setRecordCategory] = useState<string>('生活雜費');
@@ -65,7 +68,7 @@ export function RecordFormModal({
     } else if (isOpen) {
       // Reset to defaults for "Add" mode when opening
       setRecordType('expense');
-      setRecordCategory('生活雜費');
+      setRecordCategory(isSplit ? '餐飲' : '生活雜費');
       setRecordAmount('');
       setRecordDate(new Date().toISOString().split('T')[0]);
       setRecordDescription('');
@@ -90,9 +93,8 @@ export function RecordFormModal({
   // Handle submit action
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recordAmount || isNaN(Number(recordAmount)) || Number(recordAmount) <= 0) {
-      return; // Validation handled in parent or we validate here as well
-    }
+    if (!recordAmount || isNaN(Number(recordAmount)) || Number(recordAmount) <= 0) return;
+    if (isSplit && !recordPayerId) return;
 
     const data = {
       type: recordType,
@@ -137,9 +139,9 @@ export function RecordFormModal({
             <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="font-extrabold text-sm text-slate-800">
-                  {initialData ? '編輯公費明細' : '建立公費明細'}
+                  {initialData ? '編輯明細' : '新增明細'}
                 </h3>
-                <span className="text-[9px] text-slate-400">Collaborative Single Group Mode</span>
+                <span className="text-[9px] text-slate-400">{isSplit ? 'Split Bill Mode' : 'Collaborative Single Group Mode'}</span>
               </div>
               <button 
                 type="button"
@@ -152,56 +154,60 @@ export function RecordFormModal({
 
             <form onSubmit={handleSubmit} className="p-4 overflow-y-auto flex flex-col gap-3.5">
               
-              {/* Income vs Expense Selection Tabs */}
-              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setRecordType('expense')}
-                  className={`py-1.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
-                    recordType === 'expense' 
-                      ? 'bg-rose-500 text-white shadow-xs' 
-                      : 'text-slate-600 hover:bg-slate-200/50'
-                  }`}
-                >
-                  公費支出 (-)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRecordType('income')}
-                  className={`py-1.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
-                    recordType === 'income' 
-                      ? 'bg-brand-500 text-white shadow-xs' 
-                      : 'text-slate-600 hover:bg-slate-200/50'
-                  }`}
-                >
-                  公費撥款/收入 (+)
-                </button>
-              </div>
+              {/* Income vs Expense Selection Tabs — hidden in split mode (always expense) */}
+              {!isSplit && (
+                <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setRecordType('expense')}
+                    className={`py-1.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                      recordType === 'expense'
+                        ? 'bg-rose-500 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-200/50'
+                    }`}
+                  >
+                    公費支出 (-)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRecordType('income')}
+                    className={`py-1.5 rounded-md text-[11px] font-bold transition cursor-pointer ${
+                      recordType === 'income'
+                        ? 'bg-brand-500 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-200/50'
+                    }`}
+                  >
+                    公費撥款/收入 (+)
+                  </button>
+                </div>
+              )}
 
-              {/* Optional Payer Dropdown selector for Expenses only */}
-              {recordType === 'expense' && (
+              {/* Payer — required in split mode, optional in shared mode */}
+              {(isSplit || recordType === 'expense') && (
                 <>
                   <div className="flex flex-col gap-1">
-                    <label className="label-sm">此筆由誰代墊？ (選填)</label>
+                    <label className="label-sm">
+                      {isSplit ? '由誰付款？(必填)' : '此筆由誰代墊？(選填)'}
+                    </label>
                     <select
                       value={recordPayerId}
                       onChange={(e) => {
                         setRecordPayerId(e.target.value);
-                        if (!e.target.value) {
-                          setRecordIsSettled(false);
-                        }
+                        if (!e.target.value) setRecordIsSettled(false);
                       }}
                       className="input-field"
+                      required={isSplit}
                     >
-                      <option value="">🏦 公費直接支付 (不需代墊)</option>
+                      {!isSplit && <option value="">🏦 公費直接支付 (不需代墊)</option>}
+                      {isSplit && <option value="">請選擇付款人</option>}
                       {members.map(m => (
-                        <option key={m.userId} value={m.userId}>💵 由 {m.nickname} 個人代墊</option>
+                        <option key={m.userId} value={m.userId}>💵 {m.nickname}</option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Conditional Settlement status */}
-                  {recordPayerId && (
+                  {/* Settlement checkbox — only in shared mode */}
+                  {!isSplit && recordPayerId && (
                     <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/60 p-2.5 rounded-lg">
                       <input
                         id="input-is-settled-checkbox"
@@ -254,7 +260,7 @@ export function RecordFormModal({
               <div className="flex flex-col gap-1">
                 <label className="label-sm">選取分類</label>
                 <div className="grid grid-cols-3 gap-1.5">
-                  {(recordType === 'expense' ? PRESET_CATEGORIES.expense : PRESET_CATEGORIES.income).map(cat => {
+                  {(isSplit ? SPLIT_CATEGORIES : recordType === 'expense' ? PRESET_CATEGORIES.expense : PRESET_CATEGORIES.income).map(cat => {
                     const isSelected = recordCategory === cat.name;
                     return (
                       <button

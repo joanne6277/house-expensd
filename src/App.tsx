@@ -7,7 +7,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Users } from 'lucide-react';
 
 // Import Types and presets
-import { BookkeepingRecord, LedgerMember } from './types';
+import { BookkeepingRecord, LedgerMember, LedgerMode } from './types';
 
 
 // Import Firebase
@@ -24,12 +24,20 @@ import { BookkeepingLog } from './components/BookkeepingLog';
 import { RecordFormModal } from './components/RecordFormModal';
 import { SettingsModal } from './components/SettingsModal';
 
+const LEDGER_TABS: { id: string; defaultName: string; mode: LedgerMode }[] = [
+  { id: 'shared-family-ledger', defaultName: '家庭公費帳本', mode: 'shared' },
+  { id: 'second-ledger', defaultName: '雙人分帳', mode: 'split' },
+];
+
 export default function App() {
   // --- STATE DECLARATIONS ---
   const isDbOnline = isFirebaseConfigured;
-  const householdId = 'shared-family-ledger';
 
-  const [householdName, setHouseholdName] = useState<string>("家庭公費協作帳本");
+  const [activeLedgerIdx, setActiveLedgerIdx] = useState(0);
+  const householdId = LEDGER_TABS[activeLedgerIdx].id;
+  const ledgerMode = LEDGER_TABS[activeLedgerIdx].mode;
+
+  const [householdName, setHouseholdName] = useState<string>(LEDGER_TABS[0].defaultName);
   const [records, setRecords] = useState<BookkeepingRecord[]>([]);
   const [members, setMembers] = useState<LedgerMember[]>([]);
 
@@ -41,6 +49,7 @@ export default function App() {
   // Filter settings
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterMember, setFilterMember] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const now = new Date();
     // Default to previous month
@@ -65,6 +74,16 @@ export default function App() {
       setFeedbackMsg(null);
     }, 4000);
   };
+
+  // Reset state when switching ledger tabs
+  useEffect(() => {
+    setRecords([]);
+    setMembers([]);
+    setHouseholdName(LEDGER_TABS[activeLedgerIdx].defaultName);
+    setFilterType('all');
+    setFilterCategory('all');
+    setFilterMember('all');
+  }, [activeLedgerIdx]);
 
   // --- REAL-TIME FIRESTORE SYNC & DATA FERRYING ---
   useEffect(() => {
@@ -137,7 +156,7 @@ export default function App() {
         setMembers(JSON.parse(cachedMembers));
       }
     }
-  }, [isDbOnline]);
+  }, [isDbOnline, householdId]);
 
   // Keep simulated active user updated on localStorage
   useEffect(() => {
@@ -157,11 +176,15 @@ export default function App() {
 
   const allTimeFilteredRecords = useMemo(() => {
     return records.filter(rec => {
-      if (filterType !== 'all' && rec.type !== filterType) return false;
+      if (ledgerMode === 'split') {
+        if (filterMember !== 'all' && rec.payerId !== filterMember) return false;
+      } else {
+        if (filterType !== 'all' && rec.type !== filterType) return false;
+      }
       if (filterCategory !== 'all' && rec.category !== filterCategory) return false;
       return true;
     });
-  }, [records, filterType, filterCategory]);
+  }, [records, filterType, filterCategory, filterMember, ledgerMode]);
 
   const monthlyMetrics = useMemo(() => {
     let incomeSum = 0;
@@ -196,6 +219,58 @@ export default function App() {
       net: totalIncome - totalExpense
     };
   }, [records]);
+
+  const splitBalance = useMemo(() => {
+    if (ledgerMode !== 'split' || members.length < 2) return null;
+
+    const paid: { [userId: string]: number } = {};
+    members.forEach(m => { paid[m.userId] = 0; });
+
+    records
+      .filter(r => r.date.substring(0, 7) === selectedMonth && r.payerId)
+      .forEach(r => {
+        if (r.payerId && paid[r.payerId] !== undefined) {
+          paid[r.payerId] += r.amount;
+        }
+      });
+
+    const totalAll = Object.values(paid).reduce((s, v) => s + v, 0);
+    const share = totalAll / members.length;
+
+    // net > 0: 別人欠他; net < 0: 他欠別人
+    const nets = members.map(m => ({
+      userId: m.userId,
+      nickname: m.nickname,
+      net: Math.round((paid[m.userId] || 0) - share),
+    }));
+
+    // 貪心配對：每次讓欠最多的人還給被欠最多的人
+    const creditors = nets.filter(n => n.net > 0).sort((a, b) => b.net - a.net);
+    const debtors  = nets.filter(n => n.net < 0).sort((a, b) => a.net - b.net);
+    const settlements: { from: string; to: string; amount: number }[] = [];
+
+    let ci = 0, di = 0;
+    const cRem = creditors.map(c => c.net);
+    const dRem = debtors.map(d => Math.abs(d.net));
+
+    while (ci < creditors.length && di < debtors.length) {
+      const amt = Math.min(cRem[ci], dRem[di]);
+      if (amt > 0) {
+        settlements.push({ from: debtors[di].nickname, to: creditors[ci].nickname, amount: amt });
+      }
+      cRem[ci] -= amt;
+      dRem[di] -= amt;
+      if (cRem[ci] === 0) ci++;
+      if (dRem[di] === 0) di++;
+    }
+
+    return {
+      balanced: settlements.length === 0,
+      settlements,
+      totalAll,
+      memberTotals: members.map(m => ({ nickname: m.nickname, paid: paid[m.userId] || 0 })),
+    };
+  }, [ledgerMode, members, records, selectedMonth]);
 
   const categoryChartData = useMemo(() => {
     const categoryTotals: { [key: string]: number } = {};
@@ -462,14 +537,37 @@ export default function App() {
       {/* FEEDBACK TOAST NOTIFICATION */}
       <FeedbackToast message={feedbackMsg} onClose={() => setFeedbackMsg(null)} />
 
+      {/* LEDGER TAB SWITCHER */}
+      <div className="sticky top-[57px] z-30 bg-white border-b border-slate-200 shadow-xs">
+        <div className="max-w-md mx-auto flex">
+          {LEDGER_TABS.map((tab, idx) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveLedgerIdx(idx)}
+              className={`flex-1 text-sm font-semibold py-2.5 border-b-2 transition-colors ${
+                activeLedgerIdx === idx
+                  ? 'border-brand-600 text-brand-700'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {tab.defaultName}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* MAIN SCREEN SECTION */}
       <main id="main-content" className="flex-1 max-w-md w-full mx-auto px-4 py-5 flex flex-col gap-4 pb-28">
         
         {/* CURRENT LEDGER HIGHLIGHT CARD */}
-        <LedgerHighlightCard 
+        <LedgerHighlightCard
           householdName={householdName}
           monthlyMetrics={monthlyMetrics}
           onOpenConfig={() => setIsConfigModalOpen(true)}
+          ledgerMode={ledgerMode}
+          splitBalance={splitBalance}
+          selectedMonth={selectedMonth}
         />
 
         {/* ACTIVE TEAM COLLABORATORS AVATAR ROW */}
@@ -484,7 +582,7 @@ export default function App() {
         />
 
         {/* STATISTICS RECHARTS PANEL */}
-        <StatisticsPanel 
+        <StatisticsPanel
           filteredRecords={filteredRecords}
           selectedMonth={selectedMonth}
           onSelectMonth={setSelectedMonth}
@@ -493,10 +591,11 @@ export default function App() {
           categoryChartData={categoryChartData}
           members={members}
           onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
+          ledgerMode={ledgerMode}
         />
 
         {/* FINANCIAL RECONCILIATIONS LIST */}
-        <BookkeepingLog 
+        <BookkeepingLog
           filteredRecords={allTimeFilteredRecords}
           filterType={filterType}
           filterCategory={filterCategory}
@@ -509,6 +608,10 @@ export default function App() {
             setEditingRecord(null);
             setIsAddModalOpen(true);
           }}
+          ledgerMode={ledgerMode}
+          members={members}
+          filterMember={filterMember}
+          setFilterMember={setFilterMember}
         />
       </main>
 
@@ -525,7 +628,7 @@ export default function App() {
             className="btn-primary flex-1 text-xs"
           >
             <Plus className="w-4 h-4 stroke-3" />
-            <span>記一筆公費</span>
+            <span>{ledgerMode === 'split' ? '新增支出' : '記一筆公費'}</span>
           </button>
 
           <button 
@@ -541,7 +644,7 @@ export default function App() {
       </div>
 
       {/* 1. DIALOG: NEW RECORD FORM POPUP */}
-      <RecordFormModal 
+      <RecordFormModal
         isOpen={isAddModalOpen}
         onClose={() => {
           setIsAddModalOpen(false);
@@ -549,6 +652,7 @@ export default function App() {
         }}
         members={members}
         initialData={editingRecord}
+        ledgerMode={ledgerMode}
         onAddRecord={handleAddRecordItem}
         onUpdateRecord={handleUpdateRecordItem}
       />

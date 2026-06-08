@@ -6,8 +6,10 @@
 import React from 'react';
 import { Trash2, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookkeepingRecord, PRESET_CATEGORIES } from '../types';
+import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+
+const SPLIT_FILTER_CATEGORIES = ['餐飲', '日用品'];
 
 interface BookkeepingLogProps {
   filteredRecords: BookkeepingRecord[];
@@ -19,6 +21,10 @@ interface BookkeepingLogProps {
   onEditRecord: (record: BookkeepingRecord) => void;
   onToggleSettled: (record: BookkeepingRecord) => void;
   onOpenAddModal: () => void;
+  ledgerMode?: LedgerMode;
+  members?: LedgerMember[];
+  filterMember?: string;
+  setFilterMember?: (userId: string) => void;
 }
 
 export function BookkeepingLog({
@@ -31,65 +37,120 @@ export function BookkeepingLog({
   onEditRecord,
   onToggleSettled,
   onOpenAddModal,
+  ledgerMode = 'shared',
+  members = [],
+  filterMember = 'all',
+  setFilterMember,
 }: BookkeepingLogProps) {
+  const isSplit = ledgerMode === 'split';
+
   return (
     <section id="bookings-log" className="flex flex-col gap-2.5">
       <div className="flex flex-col gap-1.5">
-        <h3 className="font-bold text-xs text-slate-800 tracking-tight">家庭公費支出與入帳清單</h3>
-        
+        <h3 className="font-bold text-xs text-slate-800 tracking-tight">
+          {isSplit ? '所有帳目紀錄' : '家庭公費支出與入帳清單'}
+        </h3>
+
         {/* Horizontal Filter tags */}
         <div id="filter-controls" className="flex gap-1 overflow-x-auto pb-1 select-none">
-          <button 
-            type="button"
-            onClick={() => { setFilterType('all'); setFilterCategory('all'); }}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
-              filterType === 'all' 
-                ? 'bg-slate-900 text-white' 
-                : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
-            }`}
-          >
-            全部
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setFilterType('income'); setFilterCategory('all'); }}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
-              filterType === 'income' 
-                ? 'bg-emerald-600 text-white' 
-                : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
-            }`}
-          >
-            收入
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setFilterType('expense'); setFilterCategory('all'); }}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
-              filterType === 'expense' 
-                ? 'bg-rose-600 text-white' 
-                : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
-            }`}
-          >
-            支出
-          </button>
-
-          {(filterType === 'expense' ? PRESET_CATEGORIES.expense : PRESET_CATEGORIES.income).map(cat => (
-            <button
-              key={cat.name}
-              type="button"
-              onClick={() => {
-                setFilterType(filterType === 'all' ? 'expense' : filterType);
-                setFilterCategory(cat.name);
-              }}
-              className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
-                filterCategory === cat.name
-                  ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
+          {isSplit ? (
+            <>
+              {/* Member filter */}
+              <button
+                type="button"
+                onClick={() => { setFilterMember?.('all'); setFilterCategory('all'); }}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                  filterMember === 'all'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                全部
+              </button>
+              {members.map(m => (
+                <button
+                  key={m.userId}
+                  type="button"
+                  onClick={() => { setFilterMember?.(m.userId); setFilterCategory('all'); }}
+                  className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                    filterMember === m.userId
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                  }`}
+                >
+                  {m.nickname}
+                </button>
+              ))}
+              {/* Category filter */}
+              {SPLIT_FILTER_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCategory(filterCategory === cat ? 'all' : cat)}
+                  className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
+                    filterCategory === cat
+                      ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => { setFilterType('all'); setFilterCategory('all'); }}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                  filterType === 'all'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                全部
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFilterType('income'); setFilterCategory('all'); }}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                  filterType === 'income'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                收入
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFilterType('expense'); setFilterCategory('all'); }}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                  filterType === 'expense'
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                }`}
+              >
+                支出
+              </button>
+              {(filterType === 'expense' ? PRESET_CATEGORIES.expense : PRESET_CATEGORIES.income).map(cat => (
+                <button
+                  key={cat.name}
+                  type="button"
+                  onClick={() => {
+                    setFilterType(filterType === 'all' ? 'expense' : filterType);
+                    setFilterCategory(cat.name);
+                  }}
+                  className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
+                    filterCategory === cat.name
+                      ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
+                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </div>
 

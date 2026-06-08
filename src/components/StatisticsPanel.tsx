@@ -13,7 +13,7 @@ import {
 import { 
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip 
 } from 'recharts';
-import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember } from '../types';
+import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember, LedgerMode } from '../types';
 
 interface StatisticsPanelProps {
   filteredRecords: BookkeepingRecord[];
@@ -24,6 +24,7 @@ interface StatisticsPanelProps {
   categoryChartData: { name: string; value: number }[];
   members: LedgerMember[];
   onBulkSettle: () => void;
+  ledgerMode?: LedgerMode;
 }
 
 export function StatisticsPanel({
@@ -35,7 +36,9 @@ export function StatisticsPanel({
   categoryChartData,
   members,
   onBulkSettle,
+  ledgerMode = 'shared',
 }: StatisticsPanelProps) {
+  const isSplit = ledgerMode === 'split';
   
   // Calculate unsettled prepayments grouped by payer
   const unsettledPrepayments = React.useMemo(() => {
@@ -89,23 +92,25 @@ export function StatisticsPanel({
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-xs text-slate-800 tracking-tight">本月收支圓餅與待結算</h3>
         
-        {/* Chart toggle switch */}
-        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
-          <button 
-            onClick={() => onChangeChartTab('pie')}
-            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
-            title="支出類別佔比"
-          >
-            <PieChartIcon className="w-3.5 h-3.5" />
-          </button>
-          <button 
-            onClick={() => onChangeChartTab('settlement')}
-            className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
-            title="代墊款項結算"
-          >
-            <Wallet className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {/* Chart toggle — hidden in split mode */}
+        {!isSplit && (
+          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
+            <button
+              onClick={() => onChangeChartTab('pie')}
+              className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              title="支出類別佔比"
+            >
+              <PieChartIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onChangeChartTab('settlement')}
+              className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              title="代墊款項結算"
+            >
+              <Wallet className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Month selective controller */}
@@ -135,13 +140,13 @@ export function StatisticsPanel({
 
       {/* Canvas state container */}
       <div className="h-44 flex flex-col items-center justify-center">
-        {currentChartTab === 'settlement' ? (
+        {(isSplit || currentChartTab === 'settlement') ? (
           <div className="w-full h-full flex flex-col gap-3">
             <div className="flex-1 overflow-y-auto pr-1">
               {unsettledPrepayments.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-1.5 text-slate-400">
                   <Wallet className="w-5 h-5 opacity-20" />
-                  <p className="text-[10px]">本月暫無待結清的代墊費用。</p>
+                  <p className="text-[10px]">{isSplit ? '本月尚無支出紀錄。' : '本月暫無待結清的代墊費用。'}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">

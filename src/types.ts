@@ -33,6 +33,17 @@ export interface LedgerMember {
   lastActive: string; // ISO date-time
 }
 
+export type LedgerMode = 'shared' | 'split';
+
+export const SPLIT_CATEGORIES = [
+  { name: '餐飲', icon: 'UtensilsCrossed', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200' },
+  { name: '交通', icon: 'Car', color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
+  { name: '購物', icon: 'ShoppingBag', color: 'bg-pink-100 text-pink-700 hover:bg-pink-200' },
+  { name: '日用品', icon: 'Droplets', color: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200' },
+  { name: '娛樂', icon: 'Smile', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
+  { name: '其它', icon: 'HelpCircle', color: 'bg-slate-100 text-slate-700 hover:bg-slate-200' },
+];
+
 export const PRESET_CATEGORIES = {
   income: [
     { name: '公費撥款', icon: 'Coins', color: 'bg-brand-100 text-brand-700 hover:bg-brand-200' },
