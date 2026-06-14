@@ -12,7 +12,7 @@ import { BookkeepingRecord, LedgerMember, LedgerMode } from './types';
 
 // Import Firebase
 import { db, isFirebaseConfigured, handleFirestoreError, OperationType } from './firebase';
-import { collection, doc, setDoc, onSnapshot, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, orderBy, deleteDoc, deleteField } from 'firebase/firestore';
 
 // Import Modular Sub-Components
 import { Header } from './components/Header';
@@ -444,23 +444,27 @@ export default function App() {
   }) => {
     const payer = data.payerId ? (members.find(m => m.userId === data.payerId) || null) : null;
 
-    const payload: Partial<BookkeepingRecord> = {
+    // Firestore 用，需以 deleteField() 真正刪除欄位；本地 fallback 用 undefined
+    const isOnline = isDbOnline && db;
+    const removeMarker: any = isOnline ? deleteField() : undefined;
+
+    const payload: any = {
       type: data.type,
       category: data.category,
       amount: data.amount,
       date: data.date,
       description: data.description,
-      payerId: data.payerId || null as any,
+      payerId: data.payerId || removeMarker,
       payerName: payer ? payer.nickname : '',
       isSettled: data.payerId ? data.isSettled : false,
-      splitWithIds: data.splitWithIds && data.splitWithIds.length > 0 ? data.splitWithIds : null as any,
-      splitShares: data.splitShares && Object.keys(data.splitShares).length > 0 ? data.splitShares : null as any,
+      splitWithIds: data.splitWithIds && data.splitWithIds.length > 0 ? data.splitWithIds : removeMarker,
+      splitShares: data.splitShares && Object.keys(data.splitShares).length > 0 ? data.splitShares : removeMarker,
       updatedAt: new Date().toISOString()
     };
 
-    if (isDbOnline && db) {
+    if (isOnline) {
       try {
-        const docRef = doc(db, 'household_ledgers', householdId, 'records', id);
+        const docRef = doc(db!, 'household_ledgers', householdId, 'records', id);
         await setDoc(docRef, payload, { merge: true });
         triggerFeedback("帳目已更新成功！", "success");
       } catch (err) {
@@ -468,7 +472,15 @@ export default function App() {
         console.error(err);
       }
     } else {
-      const updated = records.map(r => r.id === id ? { ...r, ...payload } : r);
+      // 本機模式：把 undefined 的欄位真正從 record 中刪除
+      const updated = records.map(r => {
+        if (r.id !== id) return r;
+        const merged: any = { ...r, ...payload };
+        Object.keys(payload).forEach(k => {
+          if (payload[k] === undefined) delete merged[k];
+        });
+        return merged as BookkeepingRecord;
+      });
       localStorage.setItem(`local_records_${householdId}`, JSON.stringify(updated));
       setRecords(updated);
       triggerFeedback("帳目已在本機更新成功！", "success");

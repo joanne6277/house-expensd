@@ -180,9 +180,15 @@ export function RecordFormModal({
     if (splitMode === 'equal') {
       const count = equalParticipants.length;
       const total = Math.round(Number(recordAmount) || 0);
-      const perPerson = count > 0 ? total / count : 0;
       const shares: { [uid: string]: number } = {};
-      equalParticipants.forEach(uid => { shares[uid] = perPerson; });
+      if (count > 0) {
+        const base = Math.floor(total / count);
+        const remainder = total - base * count;
+        // 整數分配，最後一人吸收餘數，確保 sum(shares) === total
+        equalParticipants.forEach((uid, i) => {
+          shares[uid] = i === count - 1 ? base + remainder : base;
+        });
+      }
       return { splitWithIds: equalParticipants, splitShares: shares, totalAmount: total };
     } else {
       const shares: { [uid: string]: number } = {};
@@ -210,7 +216,8 @@ export function RecordFormModal({
         date: recordDate,
         description: recordDescription.trim(),
         payerId: recordPayerId,
-        isSettled: false,
+        // 編輯時保留原本結清狀態；新增則預設未結清
+        isSettled: initialData?.isSettled ?? false,
         splitWithIds,
         splitShares,
       };
