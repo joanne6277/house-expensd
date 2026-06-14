@@ -151,12 +151,18 @@ export function RecordFormModal({
     const totalAmount = Number(recordAmount) || 0;
 
     if (next === 'custom') {
-      // equal → custom: prefill each participant with their equal share
+      // equal → custom: 用與 buildSplitPayload 相同的 floor+餘數邏輯預填
       const count = equalParticipants.length;
-      const perPerson = count > 0 ? Math.round(totalAmount / count) : 0;
+      const base = count > 0 ? Math.floor(totalAmount / count) : 0;
+      const remainder = count > 0 ? totalAmount - base * count : 0;
       const shares: { [uid: string]: string } = {};
       members.forEach(m => {
-        shares[m.userId] = equalParticipants.includes(m.userId) ? String(perPerson) : '';
+        if (!equalParticipants.includes(m.userId)) {
+          shares[m.userId] = '';
+        } else {
+          const idx = equalParticipants.indexOf(m.userId);
+          shares[m.userId] = String(idx === count - 1 ? base + remainder : base);
+        }
       });
       setCustomShares(shares);
     } else {
@@ -260,11 +266,16 @@ export function RecordFormModal({
 
   const quickAmounts = recordType === 'income' ? [1000, 5000, 10000] : [100, 500, 1000];
 
-  // Equal mode: per-person preview
+  // Equal mode: per-person preview (用同 buildSplitPayload 的 floor 邏輯，顯示 base 值)
   const equalPerPerson = (() => {
     const total = Number(recordAmount) || 0;
     const count = equalParticipants.length;
-    return count > 0 && total > 0 ? Math.round(total / count) : 0;
+    return count > 0 && total > 0 ? Math.floor(total / count) : 0;
+  })();
+  const equalRemainder = (() => {
+    const total = Number(recordAmount) || 0;
+    const count = equalParticipants.length;
+    return count > 0 ? total - Math.floor(total / count) * count : 0;
   })();
 
   // Custom mode: running total
@@ -447,7 +458,9 @@ export function RecordFormModal({
                   </div>
                   {isSplit && splitMode === 'equal' && equalPerPerson > 0 && equalParticipants.length > 0 && (
                     <p className="text-[10px] text-indigo-600 font-semibold">
-                      每人分擔 ${equalPerPerson.toLocaleString()}（共 {equalParticipants.length} 人）
+                      每人分擔 ${equalPerPerson.toLocaleString()}
+                      {equalRemainder > 0 && <span className="text-slate-400 font-normal">（最後一人 ${(equalPerPerson + equalRemainder).toLocaleString()}）</span>}
+                      （共 {equalParticipants.length} 人）
                     </p>
                   )}
                 </div>
