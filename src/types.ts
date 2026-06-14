@@ -22,6 +22,8 @@ export interface BookkeepingRecord {
   payerId?: string; // 代墊人 ID (選填)
   payerName?: string; // 代墊人暱稱 (選填)
   isSettled?: boolean; // 已結清 (勾選，預設 false/未結清)
+  splitWithIds?: string[]; // 分擔人 ID 陣列 (split mode 用，undefined 表示除付款人外全員均分)
+  splitShares?: { [userId: string]: number }; // 每位分擔人的實際金額 (有此欄位時優先使用)
   createdAt?: any;
   updatedAt?: any;
 }

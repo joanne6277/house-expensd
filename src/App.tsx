@@ -29,6 +29,17 @@ const LEDGER_TABS: { id: string; defaultName: string; mode: LedgerMode }[] = [
   { id: 'second-ledger', defaultName: '其他分帳', mode: 'split' },
 ];
 
+const computeDefaultMonth = (mode: LedgerMode): string => {
+  const now = new Date();
+  // shared 模式預設前一月，split 模式預設當月
+  const target = mode === 'split'
+    ? now
+    : new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
 export default function App() {
   // --- STATE DECLARATIONS ---
   const isDbOnline = isFirebaseConfigured;
@@ -50,14 +61,9 @@ export default function App() {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterMember, setFilterMember] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    const now = new Date();
-    // Default to previous month
-    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const year = prevDate.getFullYear();
-    const month = String(prevDate.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  });
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    () => computeDefaultMonth(LEDGER_TABS[0].mode)
+  );
 
   // Modal and Display controllers
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -83,6 +89,7 @@ export default function App() {
     setFilterType('all');
     setFilterCategory('all');
     setFilterMember('all');
+    setSelectedMonth(computeDefaultMonth(LEDGER_TABS[activeLedgerIdx].mode));
   }, [activeLedgerIdx]);
 
   // --- REAL-TIME FIRESTORE SYNC & DATA FERRYING ---
@@ -224,30 +231,54 @@ export default function App() {
   const splitBalance = useMemo(() => {
     if (ledgerMode !== 'split' || members.length < 2) return null;
 
-    const paid: { [userId: string]: number } = {};
-    members.forEach(m => { paid[m.userId] = 0; });
+    // nets[userId] > 0: 別人欠他; < 0: 他欠別人
+    const nets: { [userId: string]: number } = {};
+    members.forEach(m => { nets[m.userId] = 0; });
 
+    // 每筆 record：解析每位分擔人應付金額，付款人應收加總
     records
       .filter(r => r.date.substring(0, 7) === selectedMonth && r.payerId)
       .forEach(r => {
-        if (r.payerId && paid[r.payerId] !== undefined) {
-          paid[r.payerId] += r.amount;
+        if (!r.payerId || nets[r.payerId] === undefined) return;
+
+        let shares: { [uid: string]: number };
+
+        if (r.splitShares && Object.keys(r.splitShares).length > 0) {
+          // 優先使用自訂金額（含付款人自己若有分擔）
+          shares = Object.fromEntries(
+            Object.entries(r.splitShares).filter(([uid]) => nets[uid] !== undefined)
+          );
+        } else if (r.splitWithIds && r.splitWithIds.length > 0) {
+          // fallback：splitWithIds 均分
+          const eligible = r.splitWithIds.filter(id => nets[id] !== undefined);
+          const per = eligible.length > 0 ? r.amount / eligible.length : 0;
+          shares = Object.fromEntries(eligible.map(uid => [uid, per]));
+        } else {
+          // 最舊 fallback：除付款人外全員均分
+          const others = members.filter(m => m.userId !== r.payerId).map(m => m.userId);
+          const per = others.length > 0 ? r.amount / others.length : 0;
+          shares = Object.fromEntries(others.map(uid => [uid, per]));
         }
+
+        if (Object.keys(shares).length === 0) return;
+
+        const totalShare = Object.values(shares).reduce((s, v) => s + v, 0);
+        nets[r.payerId] += totalShare;         // 付款人應收分擔人總額
+        Object.entries(shares).forEach(([uid, amt]) => {
+          nets[uid] -= amt;                    // 各分擔人應付自己那份
+        });
       });
 
-    const totalAll = Object.values(paid).reduce((s, v) => s + v, 0);
-    const share = totalAll / members.length;
-
-    // net > 0: 別人欠他; net < 0: 他欠別人
-    const nets = members.map(m => ({
+    // 四捨五入，避免浮點誤差
+    const roundedNets = members.map(m => ({
       userId: m.userId,
       nickname: m.nickname,
-      net: Math.round((paid[m.userId] || 0) - share),
+      net: Math.round(nets[m.userId] || 0),
     }));
 
-    // 貪心配對：每次讓欠最多的人還給被欠最多的人
-    const creditors = nets.filter(n => n.net > 0).sort((a, b) => b.net - a.net);
-    const debtors  = nets.filter(n => n.net < 0).sort((a, b) => a.net - b.net);
+    // 貪心配對產生最少筆數的還款清單
+    const creditors = roundedNets.filter(n => n.net > 0).sort((a, b) => b.net - a.net);
+    const debtors   = roundedNets.filter(n => n.net < 0).sort((a, b) => a.net - b.net);
     const settlements: { from: string; to: string; amount: number }[] = [];
 
     let ci = 0, di = 0;
@@ -265,11 +296,39 @@ export default function App() {
       if (dRem[di] === 0) di++;
     }
 
+    // 各人實際消費 = 所有記錄中屬於該成員的 share 加總
+    const consumed: { [userId: string]: number } = {};
+    members.forEach(m => { consumed[m.userId] = 0; });
+
+    records
+      .filter(r => r.date.substring(0, 7) === selectedMonth && r.payerId)
+      .forEach(r => {
+        let shares: { [uid: string]: number };
+        if (r.splitShares && Object.keys(r.splitShares).length > 0) {
+          shares = Object.fromEntries(
+            Object.entries(r.splitShares).filter(([uid]) => consumed[uid] !== undefined)
+          );
+        } else if (r.splitWithIds && r.splitWithIds.length > 0) {
+          const eligible = r.splitWithIds.filter(id => consumed[id] !== undefined);
+          const per = eligible.length > 0 ? r.amount / eligible.length : 0;
+          shares = Object.fromEntries(eligible.map(uid => [uid, per]));
+        } else {
+          const others = members.filter(m => m.userId !== r.payerId).map(m => m.userId);
+          const per = others.length > 0 ? r.amount / others.length : 0;
+          shares = Object.fromEntries(others.map(uid => [uid, per]));
+        }
+        Object.entries(shares).forEach(([uid, amt]) => {
+          if (consumed[uid] !== undefined) consumed[uid] += amt;
+        });
+      });
+
     return {
       balanced: settlements.length === 0,
       settlements,
-      totalAll,
-      memberTotals: members.map(m => ({ nickname: m.nickname, paid: paid[m.userId] || 0 })),
+      memberActualConsumption: members.map(m => ({
+        nickname: m.nickname,
+        consumed: Math.round(consumed[m.userId] || 0),
+      })),
     };
   }, [ledgerMode, members, records, selectedMonth]);
 
@@ -317,6 +376,8 @@ export default function App() {
     description: string;
     payerId?: string;
     isSettled?: boolean;
+    splitWithIds?: string[];
+    splitShares?: { [userId: string]: number };
   }) => {
     const payer = data.payerId ? (members.find(m => m.userId === data.payerId) || null) : null;
 
@@ -335,6 +396,13 @@ export default function App() {
       payload.payerId = data.payerId;
       payload.payerName = payer ? payer.nickname : '';
       payload.isSettled = data.isSettled;
+    }
+
+    if (data.splitWithIds && data.splitWithIds.length > 0) {
+      payload.splitWithIds = data.splitWithIds;
+    }
+    if (data.splitShares && Object.keys(data.splitShares).length > 0) {
+      payload.splitShares = data.splitShares;
     }
 
     const newRecordId = 'rec_' + Date.now();
@@ -371,6 +439,8 @@ export default function App() {
     description: string;
     payerId?: string;
     isSettled?: boolean;
+    splitWithIds?: string[];
+    splitShares?: { [userId: string]: number };
   }) => {
     const payer = data.payerId ? (members.find(m => m.userId === data.payerId) || null) : null;
 
@@ -383,6 +453,8 @@ export default function App() {
       payerId: data.payerId || null as any,
       payerName: payer ? payer.nickname : '',
       isSettled: data.payerId ? data.isSettled : false,
+      splitWithIds: data.splitWithIds && data.splitWithIds.length > 0 ? data.splitWithIds : null as any,
+      splitShares: data.splitShares && Object.keys(data.splitShares).length > 0 ? data.splitShares : null as any,
       updatedAt: new Date().toISOString()
     };
 
@@ -569,6 +641,8 @@ export default function App() {
           ledgerMode={ledgerMode}
           splitBalance={splitBalance}
           selectedMonth={selectedMonth}
+          onSelectMonth={setSelectedMonth}
+          onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
         />
 
         {/* ACTIVE TEAM COLLABORATORS AVATAR ROW */}
@@ -582,18 +656,20 @@ export default function App() {
           onOpenConfig={() => setIsConfigModalOpen(true)}
         />
 
-        {/* STATISTICS RECHARTS PANEL */}
-        <StatisticsPanel
-          filteredRecords={filteredRecords}
-          selectedMonth={selectedMonth}
-          onSelectMonth={setSelectedMonth}
-          currentChartTab={currentChartTab}
-          onChangeChartTab={setCurrentChartTab}
-          categoryChartData={categoryChartData}
-          members={members}
-          onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
-          ledgerMode={ledgerMode}
-        />
+        {/* STATISTICS RECHARTS PANEL — shared mode only */}
+        {ledgerMode === 'shared' && (
+          <StatisticsPanel
+            filteredRecords={filteredRecords}
+            selectedMonth={selectedMonth}
+            onSelectMonth={setSelectedMonth}
+            currentChartTab={currentChartTab}
+            onChangeChartTab={setCurrentChartTab}
+            categoryChartData={categoryChartData}
+            members={members}
+            onBulkSettle={() => handleBulkSettleMonth(selectedMonth)}
+            ledgerMode={ledgerMode}
+          />
+        )}
 
         {/* FINANCIAL RECONCILIATIONS LIST */}
         <BookkeepingLog
