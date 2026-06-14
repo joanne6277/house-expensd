@@ -123,7 +123,7 @@ export function RecordFormModal({
       setEqualParticipants(allMemberIds);
       setCustomShares({});
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, members.length]); // members.length 確保成員載入後重新初始化
 
   // When type changes in shared mode, reset category
   useEffect(() => {

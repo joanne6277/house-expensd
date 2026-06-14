@@ -90,6 +90,9 @@ export default function App() {
     setFilterCategory('all');
     setFilterMember('all');
     setSelectedMonth(computeDefaultMonth(LEDGER_TABS[activeLedgerIdx].mode));
+    // 關閉並清空 modal，避免舊分頁的暫存資料帶入新分頁
+    setIsAddModalOpen(false);
+    setEditingRecord(null);
   }, [activeLedgerIdx]);
 
   // --- REAL-TIME FIRESTORE SYNC & DATA FERRYING ---
