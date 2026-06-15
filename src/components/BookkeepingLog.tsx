@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Trash2, Pencil, Check, CircleAlert } from 'lucide-react';
+import { Trash2, Pencil, Check, CircleAlert, Landmark, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
@@ -181,6 +181,8 @@ export function BookkeepingLog({
               const isIncome = rec.type === 'income';
               // 結清按鈕只在「支出 + 有代墊人」時出現
               const showSettleButton = !isIncome && !!rec.payerId;
+              // shared mode 沒有結清按鈕時，第一個 slot 顯示禁用標籤
+              const showDisabledLabel = !isSplit && !showSettleButton;
 
               return (
                 <motion.div
@@ -207,25 +209,11 @@ export function BookkeepingLog({
                           <span className="text-[10px] bg-slate-100 font-bold text-slate-600 px-1.5 py-0.5 rounded">
                             {rec.category}
                           </span>
-                          {/* 付款資訊 */}
-                          {rec.payerId ? (
-                            <span className={`text-[10px] font-semibold ${
-                              isSplit
-                                ? 'text-slate-500'
-                                : rec.isSettled
-                                  ? 'text-emerald-700'
-                                  : 'text-amber-700'
-                            }`}>
+                          {/* 付款資訊（公費直付 / 公費收入 改顯示在按鈕區）*/}
+                          {rec.payerId && (
+                            <span className="text-[10px] font-semibold text-slate-500">
                               💵 {rec.payerName} {isSplit ? '付款' : '代墊'}
-                              {!isSplit && !rec.isSettled && <span className="ml-1">·未結清</span>}
-                              {!isSplit && rec.isSettled && <span className="ml-1">·已結清</span>}
                             </span>
-                          ) : (
-                            !isIncome && (
-                              <span className="text-[10px] font-semibold text-indigo-600">
-                                🏦 公費直付
-                              </span>
-                            )
                           )}
                           <span className="text-[10px] text-slate-400 font-mono">{rec.date}</span>
                         </div>
@@ -254,6 +242,19 @@ export function BookkeepingLog({
                           <Check className="w-3.5 h-3.5" />
                           {rec.isSettled ? '已結清' : '結清'}
                         </button>
+                        <div className="w-px bg-slate-200" />
+                      </>
+                    )}
+                    {showDisabledLabel && (
+                      <>
+                        <div
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold select-none cursor-not-allowed ${
+                            isIncome ? 'text-emerald-600 bg-emerald-50/40' : 'text-indigo-600 bg-indigo-50/40'
+                          }`}
+                        >
+                          {isIncome ? <Coins className="w-3.5 h-3.5" /> : <Landmark className="w-3.5 h-3.5" />}
+                          {isIncome ? '公費收入' : '公費直付'}
+                        </div>
                         <div className="w-px bg-slate-200" />
                       </>
                     )}
