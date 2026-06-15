@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { Trash2, Pencil } from 'lucide-react';
+import React, { useState } from 'react';
+import { Trash2, Pencil, Check, CircleAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
@@ -43,6 +43,14 @@ export function BookkeepingLog({
   setFilterMember,
 }: BookkeepingLogProps) {
   const isSplit = ledgerMode === 'split';
+  const [pendingDelete, setPendingDelete] = useState<BookkeepingRecord | null>(null);
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      onDeleteRecord(pendingDelete.id);
+      setPendingDelete(null);
+    }
+  };
 
   return (
     <section id="bookings-log" className="flex flex-col gap-2.5">
@@ -171,87 +179,101 @@ export function BookkeepingLog({
           <AnimatePresence initial={false}>
             {filteredRecords.map((rec) => {
               const isIncome = rec.type === 'income';
+              // 結清按鈕只在「支出 + 有代墊人」時出現
+              const showSettleButton = !isIncome && !!rec.payerId;
+
               return (
-                <motion.div 
+                <motion.div
                   key={rec.id}
                   layoutId={`record-${rec.id}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -50 }}
-                  className="bg-white rounded-xl p-3 border border-slate-200 hover:border-indigo-200 shadow-3xs flex items-center justify-between transition group"
+                  className="bg-white rounded-xl border border-slate-200 shadow-3xs overflow-hidden"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      isIncome ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                    }`}>
-                      <CategoryIcon name={rec.category} className="w-4 h-4" />
-                    </div>
-                    
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[9px] bg-slate-100 font-bold text-slate-600 px-1.5 py-0.5 rounded">
-                          {rec.category}
-                        </span>
-                        
-                        {rec.payerId ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onToggleSettled(rec);
-                            }}
-                            className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 cursor-pointer transition border ${
-                              rec.isSettled 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 animate-pulse'
-                            }`}
-                            title="點擊可直接切換結清狀態"
-                          >
-                            <span>💵 由 {rec.payerName} 代墊</span>
-                            <span className="opacity-40">•</span>
-                            <span className="font-extrabold">{rec.isSettled ? '已結清 ✅' : '未結清(點此結結清)'}</span>
-                          </button>
-                        ) : (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100/60">
-                            🏦 公費直付
-                          </span>
-                        )}
-
-                        <span className="text-[9px] text-slate-400 font-mono">
-                          {rec.date}
-                        </span>
+                  {/* 上半部：金額與資訊 */}
+                  <div className="p-3 flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                        isIncome ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                      }`}>
+                        <CategoryIcon name={rec.category} className="w-4 h-4" />
                       </div>
-                      
-                      <h4 className="font-bold text-xs text-slate-800 mt-1 truncate">
-                        {rec.description || rec.category}
-                      </h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-sm text-slate-800 truncate">
+                          {rec.description || rec.category}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="text-[10px] bg-slate-100 font-bold text-slate-600 px-1.5 py-0.5 rounded">
+                            {rec.category}
+                          </span>
+                          {/* 付款資訊 */}
+                          {rec.payerId ? (
+                            <span className={`text-[10px] font-semibold ${
+                              isSplit
+                                ? 'text-slate-500'
+                                : rec.isSettled
+                                  ? 'text-emerald-700'
+                                  : 'text-amber-700'
+                            }`}>
+                              💵 {rec.payerName} {isSplit ? '付款' : '代墊'}
+                              {!isSplit && !rec.isSettled && <span className="ml-1">·未結清</span>}
+                              {!isSplit && rec.isSettled && <span className="ml-1">·已結清</span>}
+                            </span>
+                          ) : (
+                            !isIncome && (
+                              <span className="text-[10px] font-semibold text-indigo-600">
+                                🏦 公費直付
+                              </span>
+                            )
+                          )}
+                          <span className="text-[10px] text-slate-400 font-mono">{rec.date}</span>
+                        </div>
+                      </div>
                     </div>
+                    <span className={`font-mono text-base font-black shrink-0 ${
+                      isIncome ? 'text-emerald-600' : 'text-slate-800'
+                    }`}>
+                      {isIncome ? '+' : '-'}${rec.amount.toLocaleString()}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 pl-2">
-                    <span className={`font-mono text-xs font-black shrink-0 ${isIncome ? 'text-emerald-600' : 'text-slate-800'}`}>
-                      {isIncome ? `+$${rec.amount.toLocaleString()}` : `-$${rec.amount.toLocaleString()}`}
-                    </span>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        type="button"
-                        onClick={() => onEditRecord(rec)}
-                        className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
-                        title="編輯項目"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button 
-                        type="button"
-                        onClick={() => onDeleteRecord(rec.id)}
-                        className="text-slate-300 hover:text-rose-500 p-1 rounded-md hover:bg-slate-50 cursor-pointer transition-colors"
-                        title="刪除項目"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  {/* 下半部：永遠顯示的 action 按鈕 */}
+                  <div className="border-t border-slate-100 bg-slate-50/60 flex">
+                    {showSettleButton && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onToggleSettled(rec)}
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold cursor-pointer transition ${
+                            rec.isSettled
+                              ? 'text-emerald-700 hover:bg-emerald-50'
+                              : 'text-amber-700 hover:bg-amber-50'
+                          }`}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          {rec.isSettled ? '已結清' : '結清'}
+                        </button>
+                        <div className="w-px bg-slate-200" />
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onEditRecord(rec)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      修改
+                    </button>
+                    <div className="w-px bg-slate-200" />
+                    <button
+                      type="button"
+                      onClick={() => setPendingDelete(rec)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 cursor-pointer transition"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      刪除
+                    </button>
                   </div>
                 </motion.div>
               );
@@ -259,6 +281,52 @@ export function BookkeepingLog({
           </AnimatePresence>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AnimatePresence>
+        {pendingDelete && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="bg-white rounded-2xl w-full max-w-xs shadow-xl overflow-hidden"
+            >
+              <div className="p-5 flex flex-col items-center text-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center">
+                  <CircleAlert className="w-6 h-6 text-rose-500" />
+                </div>
+                <h3 className="font-extrabold text-sm text-slate-800 mt-1">確認刪除此筆？</h3>
+                <p className="text-[11px] text-slate-500">
+                  「{pendingDelete.description || pendingDelete.category}」
+                  <span className="font-mono font-bold text-slate-700 ml-1">
+                    ${pendingDelete.amount.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">此操作無法復原</p>
+              </div>
+              <div className="flex border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setPendingDelete(null)}
+                  className="flex-1 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition"
+                >
+                  取消
+                </button>
+                <div className="w-px bg-slate-100" />
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 text-xs font-extrabold text-rose-600 hover:bg-rose-50 cursor-pointer transition"
+                >
+                  確認刪除
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
