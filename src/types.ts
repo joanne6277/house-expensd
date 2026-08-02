@@ -24,6 +24,13 @@ export interface BookkeepingRecord {
   isSettled?: boolean; // 已結清 (勾選，預設 false/未結清)
   splitWithIds?: string[]; // 分擔人 ID 陣列 (split mode 用，undefined 表示除付款人外全員均分)
   splitShares?: { [userId: string]: number }; // 每位分擔人的實際金額 (有此欄位時優先使用)
+  /**
+   * 已結清的「成對債務」清單，每個元素是 pairKey() 產生的正規化字串。
+   * 一筆三人共用的帳目同時含有兩組獨立債務（各分擔人 → 付款人），
+   * 單一個 isSettled 布林值無法只清掉其中一組，故用此欄位記錄到對的層級。
+   * isSettled === true 代表整筆全部結清，此時不需再查 settledPairs。
+   */
+  settledPairs?: string[];
   createdAt?: any;
   updatedAt?: any;
 }
@@ -36,6 +43,51 @@ export interface LedgerMember {
 }
 
 export type LedgerMode = 'shared' | 'split';
+
+/**
+ * 產生兩位成員之間的正規化「對」鍵值（與順序無關），
+ * 用於 BookkeepingRecord.settledPairs。
+ */
+export function pairKey(a: string, b: string): string {
+  return [a, b].sort().join('|');
+}
+
+/**
+ * 解析一筆分帳紀錄中，每位分擔人各自應付的金額。
+ * 優先序：splitShares（自訂金額）→ splitWithIds（均分）→ 除付款人外全員均分。
+ */
+export function resolveShares(
+  record: BookkeepingRecord,
+  members: LedgerMember[]
+): { [userId: string]: number } {
+  const isMember = (id: string) => members.some(m => m.userId === id);
+
+  if (record.splitShares && Object.keys(record.splitShares).length > 0) {
+    return Object.fromEntries(
+      Object.entries(record.splitShares).filter(([uid]) => isMember(uid))
+    );
+  }
+
+  if (record.splitWithIds && record.splitWithIds.length > 0) {
+    const eligible = record.splitWithIds.filter(isMember);
+    const per = eligible.length > 0 ? record.amount / eligible.length : 0;
+    return Object.fromEntries(eligible.map(uid => [uid, per]));
+  }
+
+  const others = members.filter(m => m.userId !== record.payerId).map(m => m.userId);
+  const per = others.length > 0 ? record.amount / others.length : 0;
+  return Object.fromEntries(others.map(uid => [uid, per]));
+}
+
+/** 該筆紀錄中，debtor → creditor 這組債務是否已結清。 */
+export function isPairSettled(
+  record: BookkeepingRecord,
+  debtor: string,
+  creditor: string
+): boolean {
+  if (record.isSettled) return true;
+  return !!record.settledPairs?.includes(pairKey(debtor, creditor));
+}
 
 export const SPLIT_CATEGORIES = [
   { name: '餐飲', icon: 'UtensilsCrossed', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200' },

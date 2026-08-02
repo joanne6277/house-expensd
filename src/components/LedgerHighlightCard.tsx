@@ -9,7 +9,7 @@ import { LedgerMode } from '../types';
 
 interface SplitBalance {
   balanced: boolean;
-  settlements: { from: string; to: string; amount: number }[];
+  settlements: { fromId: string; from: string; toId: string; to: string; amount: number }[];
   memberActualConsumption: { nickname: string; consumed: number }[];
 }
 
@@ -21,7 +21,8 @@ interface LedgerHighlightCardProps {
   splitBalance?: SplitBalance | null;
   selectedMonth?: string;
   onSelectMonth?: (month: string) => void;
-  onBulkSettle?: () => void;
+  /** 只結清這一組（fromId → toId）之間的帳目 */
+  onSettlePair?: (fromId: string, toId: string) => void;
 }
 
 export function LedgerHighlightCard({
@@ -32,7 +33,7 @@ export function LedgerHighlightCard({
   splitBalance,
   selectedMonth,
   onSelectMonth,
-  onBulkSettle,
+  onSettlePair,
 }: LedgerHighlightCardProps) {
   const isSplit = ledgerMode === 'split';
 
@@ -123,11 +124,12 @@ export function LedgerHighlightCard({
                         <span className="text-emerald-300 font-bold">{s.to}</span>
                         <span className="font-mono font-bold text-white ml-2">${s.amount.toLocaleString()}</span>
                       </span>
-                      {onBulkSettle && (
+                      {onSettlePair && (
                         <button
                           type="button"
-                          onClick={onBulkSettle}
-                          className="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white text-[9px] font-bold px-2 py-1 rounded-md transition active:scale-95 cursor-pointer shrink-0 ml-2"
+                          onClick={() => onSettlePair(s.fromId, s.toId)}
+                          title={`結清 ${s.from} → ${s.to} 的款項`}
+                          className="flex items-center gap-1 bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md transition active:scale-95 cursor-pointer shrink-0 ml-2"
                         >
                           <CheckCircle className="w-2.5 h-2.5" />
                           結清
