@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export function Header({ isDbOnline }: HeaderProps) {
   return (
-    <header id="main-header" className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs px-4 py-3">
+    <header id="main-header" className="bg-white border-b border-slate-200 px-4 py-3">
       <div className="max-w-md mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="bg-brand-600 text-white p-1.5 rounded-lg shadow-sm">

@@ -97,14 +97,14 @@ export function StatisticsPanel({
           <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
             <button
               onClick={() => onChangeChartTab('pie')}
-              className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`p-2 rounded-md cursor-pointer transition ${currentChartTab === 'pie' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
               title="支出類別佔比"
             >
               <PieChartIcon className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onChangeChartTab('settlement')}
-              className={`p-1 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`p-2 rounded-md cursor-pointer transition ${currentChartTab === 'settlement' ? 'bg-white text-emerald-600 shadow-3xs font-bold' : 'text-slate-500 hover:text-slate-800'}`}
               title="代墊款項結算"
             >
               <Wallet className="w-3.5 h-3.5" />
@@ -119,7 +119,7 @@ export function StatisticsPanel({
         <div className="flex items-center gap-1.5">
           <button 
             onClick={() => handleMonthOffset(-1)}
-            className="p-1 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
+            className="p-2 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -127,11 +127,11 @@ export function StatisticsPanel({
             type="month" 
             value={selectedMonth}
             onChange={(e) => onSelectMonth(e.target.value)}
-            className="bg-white border border-slate-200 text-xs rounded-md px-2 py-0.5 font-bold font-mono text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+            className="bg-white border border-slate-200 text-xs rounded-md px-2 py-1.5 font-bold font-mono text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
           />
           <button 
             onClick={() => handleMonthOffset(1)}
-            className="p-1 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
+            className="p-2 hover:bg-white rounded-md transition text-slate-400 hover:text-emerald-600 cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

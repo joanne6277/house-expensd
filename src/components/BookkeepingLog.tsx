@@ -8,6 +8,7 @@ import { Trash2, Pencil, Check, CircleAlert, Landmark, Coins } from 'lucide-reac
 import { motion, AnimatePresence } from 'motion/react';
 import { BookkeepingRecord, PRESET_CATEGORIES, LedgerMember, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 const SPLIT_FILTER_CATEGORIES = ['餐飲', '日用品'];
 
@@ -44,6 +45,7 @@ export function BookkeepingLog({
 }: BookkeepingLogProps) {
   const isSplit = ledgerMode === 'split';
   const [pendingDelete, setPendingDelete] = useState<BookkeepingRecord | null>(null);
+  useBodyScrollLock(!!pendingDelete);
 
   const confirmDelete = () => {
     if (pendingDelete) {
@@ -67,7 +69,7 @@ export function BookkeepingLog({
               <button
                 type="button"
                 onClick={() => { setFilterMember?.('all'); setFilterCategory('all'); }}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                   filterMember === 'all'
                     ? 'bg-slate-900 text-white'
                     : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
@@ -80,7 +82,7 @@ export function BookkeepingLog({
                   key={m.userId}
                   type="button"
                   onClick={() => { setFilterMember?.(m.userId); setFilterCategory('all'); }}
-                  className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                  className={`px-3 py-2 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                     filterMember === m.userId
                       ? 'bg-indigo-600 text-white'
                       : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
@@ -95,7 +97,7 @@ export function BookkeepingLog({
                   key={cat}
                   type="button"
                   onClick={() => setFilterCategory(filterCategory === cat ? 'all' : cat)}
-                  className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
+                  className={`px-3 py-2 rounded-lg text-[11px] font-semibold shrink-0 border transition-all cursor-pointer ${
                     filterCategory === cat
                       ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
                       : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -110,7 +112,7 @@ export function BookkeepingLog({
               <button
                 type="button"
                 onClick={() => { setFilterType('all'); setFilterCategory('all'); }}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                   filterType === 'all'
                     ? 'bg-slate-900 text-white'
                     : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
@@ -121,7 +123,7 @@ export function BookkeepingLog({
               <button
                 type="button"
                 onClick={() => { setFilterType('income'); setFilterCategory('all'); }}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                   filterType === 'income'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
@@ -132,7 +134,7 @@ export function BookkeepingLog({
               <button
                 type="button"
                 onClick={() => { setFilterType('expense'); setFilterCategory('all'); }}
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
                   filterType === 'expense'
                     ? 'bg-rose-600 text-white'
                     : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
@@ -148,7 +150,7 @@ export function BookkeepingLog({
                     setFilterType(filterType === 'all' ? 'expense' : filterType);
                     setFilterCategory(cat.name);
                   }}
-                  className={`px-2 py-1 rounded-md text-[10px] font-semibold shrink-0 border transition-all cursor-pointer ${
+                  className={`px-3 py-2 rounded-lg text-[11px] font-semibold shrink-0 border transition-all cursor-pointer ${
                     filterCategory === cat.name
                       ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold'
                       : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -233,7 +235,7 @@ export function BookkeepingLog({
                         <button
                           type="button"
                           onClick={() => onToggleSettled(rec)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold cursor-pointer transition ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold cursor-pointer transition ${
                             rec.isSettled
                               ? 'text-emerald-700 hover:bg-emerald-50'
                               : 'text-amber-700 hover:bg-amber-50'
@@ -248,7 +250,7 @@ export function BookkeepingLog({
                     {showDisabledLabel && (
                       <>
                         <div
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold select-none cursor-not-allowed ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold select-none cursor-not-allowed ${
                             isIncome ? 'text-emerald-600 bg-emerald-50/40' : 'text-indigo-600 bg-indigo-50/40'
                           }`}
                         >
@@ -261,7 +263,7 @@ export function BookkeepingLog({
                     <button
                       type="button"
                       onClick={() => onEditRecord(rec)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       修改
@@ -270,7 +272,7 @@ export function BookkeepingLog({
                     <button
                       type="button"
                       onClick={() => setPendingDelete(rec)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 cursor-pointer transition"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 cursor-pointer transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       刪除

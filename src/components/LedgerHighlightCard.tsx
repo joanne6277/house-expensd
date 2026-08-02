@@ -56,20 +56,20 @@ export function LedgerHighlightCard({
 
         {/* split mode: 月份選擇器取代帳冊設定按鈕 */}
         {isSplit ? (
-          <div className="flex items-center gap-0.5 bg-brand-950/30 px-2 py-1 rounded-lg border border-brand-500/10">
-            <button type="button" onClick={() => handleMonthOffset(-1)}
-              className="p-0.5 hover:bg-brand-600/30 rounded transition text-brand-300 hover:text-white cursor-pointer">
-              <ChevronLeft className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-0.5 bg-brand-950/30 pl-0.5 pr-0.5 rounded-lg border border-brand-500/10">
+            <button type="button" onClick={() => handleMonthOffset(-1)} aria-label="上個月"
+              className="p-2 hover:bg-brand-600/30 rounded-md transition text-brand-300 hover:text-white cursor-pointer">
+              <ChevronLeft className="w-4 h-4" />
             </button>
             <input
               type="month"
               value={selectedMonth || ''}
               onChange={(e) => onSelectMonth?.(e.target.value)}
-              className="bg-transparent border-none text-white text-[11px] font-bold font-mono text-center focus:outline-none cursor-pointer w-20"
+              className="bg-transparent border-none text-white text-[11px] font-bold font-mono text-center focus:outline-none cursor-pointer w-[7.5rem] sm:w-24 py-1.5"
             />
-            <button type="button" onClick={() => handleMonthOffset(1)}
-              className="p-0.5 hover:bg-brand-600/30 rounded transition text-brand-300 hover:text-white cursor-pointer">
-              <ChevronRight className="w-3.5 h-3.5" />
+            <button type="button" onClick={() => handleMonthOffset(1)} aria-label="下個月"
+              className="p-2 hover:bg-brand-600/30 rounded-md transition text-brand-300 hover:text-white cursor-pointer">
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         ) : (

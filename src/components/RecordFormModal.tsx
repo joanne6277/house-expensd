@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LedgerMember, PRESET_CATEGORIES, SPLIT_CATEGORIES, BookkeepingRecord, LedgerMode } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export interface RecordFormModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export function RecordFormModal({
   onUpdateRecord,
 }: RecordFormModalProps) {
   const isSplit = ledgerMode === 'split';
+  useBodyScrollLock(isOpen);
 
   // --- shared mode state ---
   const [recordType, setRecordType] = useState<'income' | 'expense'>('expense');
@@ -291,7 +293,7 @@ export function RecordFormModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 150 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md overflow-hidden max-h-[92vh] flex flex-col"
+            className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md overflow-hidden max-h-[92dvh] flex flex-col"
           >
             {/* Header */}
             <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
@@ -304,12 +306,16 @@ export function RecordFormModal({
                 </span>
               </div>
               <button type="button" onClick={onClose}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded cursor-pointer">
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold px-3 py-2 -mr-2 rounded-lg cursor-pointer">
                 關閉
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 overflow-y-auto flex flex-col gap-3.5">
+            <form
+              onSubmit={handleSubmit}
+              className="p-4 overflow-y-auto scroll-area flex flex-col gap-3.5"
+              style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+            >
 
               {/* ── SHARED MODE ── */}
               {!isSplit && (

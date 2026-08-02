@@ -38,7 +38,7 @@ export function CollaboratorsRow({
             <button
               key={member.userId}
               onClick={() => onSelectMember(member.userId, member.nickname)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition cursor-pointer font-medium ${
+              className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs transition cursor-pointer font-medium ${
                 isActiveSim 
                   ? 'bg-slate-900 text-white font-semibold shadow-xs scale-[1.02]' 
                   : 'bg-slate-50 text-slate-600 border border-slate-200/60 hover:bg-slate-100'
@@ -54,7 +54,7 @@ export function CollaboratorsRow({
         <button
           id="invite-btn"
           onClick={onOpenConfig}
-          className="avatar-circle border border-dashed border-slate-300 text-slate-400 hover:text-brand-600 hover:border-brand-400 cursor-pointer transition"
+          className="w-9 h-9 rounded-full flex items-center justify-center border border-dashed border-slate-300 text-slate-400 hover:text-brand-600 hover:border-brand-400 cursor-pointer transition"
           title="新增家庭成員"
         >
           <Plus className="w-3.5 h-3.5" />

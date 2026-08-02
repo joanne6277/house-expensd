@@ -85,3 +85,43 @@
     @apply w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold;
   }
 }
+
+/*
+ * ── MOBILE / iOS FIXES ──
+ * 這些規則刻意放在 @layer 之外：CSS cascade 中「未分層」的一般宣告
+ * 優先權高於任何 @layer（含 Tailwind utilities），因此能覆蓋掉
+ * 元件上的 text-xs / text-sm，而不需要 !important。
+ */
+
+/* iOS Safari 在 font-size < 16px 的輸入框聚焦時會自動放大整個 viewport，
+   且關閉鍵盤後縮放不會完全還原，導致版面邊界位移。
+   在手機寬度強制所有表單控制項為 16px 即可根治。 */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* 避免長字串（備註、成員暱稱）撐破卡片造成整頁水平捲動。
+   必須用 clip 而非 hidden：hidden 會讓 #app-root 變成捲動容器，
+   使內部 position:sticky 的 header 失效。clip 不會建立捲動容器。 */
+#app-root {
+  overflow-x: clip;
+}
+
+/* 讓 iOS 慣性捲動在 modal 內容區順暢，並避免捲到底時帶動背景 */
+.scroll-area {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 安全區域：iPhone 底部 home indicator */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pb-safe-plus {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.625rem);
+}

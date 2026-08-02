@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export function SettingsModal({
   const [newHouseholdNameInput, setNewHouseholdNameInput] = useState(householdName);
   const [newSimulatedMemberName, setNewSimulatedMemberName] = useState('');
   const [newSimulatedMemberColor, setNewSimulatedMemberColor] = useState('sky');
+  useBodyScrollLock(isOpen);
 
   // Synchronize name selection options
   useEffect(() => {
@@ -52,20 +54,23 @@ export function SettingsModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 150 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-sm overflow-hidden max-h-[92vh] flex flex-col"
+            className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-sm overflow-hidden max-h-[92dvh] flex flex-col"
           >
             <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
               <h3 className="font-extrabold text-sm text-slate-800">共同協作與基本設定</h3>
               <button 
                 type="button"
                 onClick={onClose} 
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold px-3 py-2 -mr-2 rounded-lg cursor-pointer"
               >
                 關閉
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto flex flex-col gap-4">
+            <div
+              className="p-4 overflow-y-auto scroll-area flex flex-col gap-4"
+              style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+            >
               
               {/* Ledger metadata title modifier */}
               <div className="flex flex-col gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100">

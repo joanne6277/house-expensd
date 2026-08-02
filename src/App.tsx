@@ -617,36 +617,42 @@ export default function App() {
   };
 
   return (
-    <div id="app-root" className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
+    <div id="app-root" className="min-h-dvh bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
       
-      {/* HEADER BAR */}
-      <Header isDbOnline={isDbOnline} />
+      {/* STICKY TOP: HEADER + LEDGER TABS（合併為單一 sticky 容器，
+          避免硬編碼 header 高度導致的錯位） */}
+      <div className="sticky top-0 z-40 shadow-xs">
+        <Header isDbOnline={isDbOnline} />
+
+        <div className="bg-white border-b border-slate-200">
+          <div className="max-w-md mx-auto flex">
+            {LEDGER_TABS.map((tab, idx) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveLedgerIdx(idx)}
+                className={`flex-1 text-sm font-semibold py-3 border-b-2 transition-colors ${
+                  activeLedgerIdx === idx
+                    ? 'border-brand-600 text-brand-700'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {tab.defaultName}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* FEEDBACK TOAST NOTIFICATION */}
       <FeedbackToast message={feedbackMsg} onClose={() => setFeedbackMsg(null)} />
 
-      {/* LEDGER TAB SWITCHER */}
-      <div className="sticky top-[57px] z-30 bg-white border-b border-slate-200 shadow-xs">
-        <div className="max-w-md mx-auto flex">
-          {LEDGER_TABS.map((tab, idx) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveLedgerIdx(idx)}
-              className={`flex-1 text-sm font-semibold py-2.5 border-b-2 transition-colors ${
-                activeLedgerIdx === idx
-                  ? 'border-brand-600 text-brand-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {tab.defaultName}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* MAIN SCREEN SECTION */}
-      <main id="main-content" className="flex-1 max-w-md w-full mx-auto px-4 py-5 flex flex-col gap-4 pb-28">
+      <main
+        id="main-content"
+        className="flex-1 max-w-md w-full mx-auto px-4 py-5 flex flex-col gap-4"
+        style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         
         {/* CURRENT LEDGER HIGHLIGHT CARD */}
         <LedgerHighlightCard
@@ -708,7 +714,7 @@ export default function App() {
       </main>
 
       {/* FOOTER FIXED BOTTOM DENSE MENU */}
-      <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 shadow-lg">
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 pt-2.5 pb-safe-plus px-4 shadow-lg">
         <div className="max-w-md mx-auto flex items-center justify-around gap-3">
           <button 
             type="button"
