@@ -238,9 +238,10 @@ export default function App() {
     const nets: { [userId: string]: number } = {};
     members.forEach(m => { nets[m.userId] = 0; });
 
-    // 每筆 record：解析每位分擔人應付金額，付款人應收加總
+    // 每筆 record：解析每位分擔人應付金額，付款人應收加總。
+    // 已結清（isSettled）的帳目代表款項已還，不應再計入待還款餘額。
     records
-      .filter(r => r.date.substring(0, 7) === selectedMonth && r.payerId)
+      .filter(r => r.date.substring(0, 7) === selectedMonth && r.payerId && !r.isSettled)
       .forEach(r => {
         if (!r.payerId || nets[r.payerId] === undefined) return;
 
@@ -299,7 +300,9 @@ export default function App() {
       if (dRem[di] === 0) di++;
     }
 
-    // 各人實際消費 = 所有記錄中屬於該成員的 share 加總
+    // 各人實際消費 = 所有記錄中屬於該成員的 share 加總。
+    // 這是「消費統計」而非「待還款」，已結清仍代表當月確實花了這筆錢，
+    // 因此刻意不排除 isSettled（與上方 nets 的計算基準不同）。
     const consumed: { [userId: string]: number } = {};
     members.forEach(m => { consumed[m.userId] = 0; });
 
